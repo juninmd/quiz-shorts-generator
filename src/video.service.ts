@@ -1,8 +1,8 @@
 import { execSync } from 'child_process';
 import fs from 'fs';
 import path from 'path';
-import { Quiz } from './content.service';
-import { WordTimestamp } from './tts.service';
+import type { Quiz } from './content.service';
+import type { WordTimestamp } from './tts.service';
 
 const wrapText = (text: string, maxLen: number): string => {
   const words = text.split(' ');
@@ -60,7 +60,12 @@ export const assembleVideo = async (
       optTxtPaths[opt] = p;
     }
 
-    const fontFile = '/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf';
+    const normalizePath = (p: string) => p.replace(/\\/g, '/');
+    const escapeFilterPath = (p: string) => normalizePath(p).replace(/([:\\])/g, '\\$1');
+
+    const fontFile = escapeFilterPath(process.platform === 'win32' 
+      ? 'C:/Windows/Fonts/arialbd.ttf' 
+      : '/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf');
 
     const filters: string[] = [];
 
@@ -74,25 +79,25 @@ export const assembleVideo = async (
     let vIdx = 1;
 
     // Pergunta
-    filters.push(`[${vCurrent}]drawtext=textfile='${qTxtPath}':fontfile=${fontFile}:fontcolor=white:fontsize=60:x=(w-text_w)/2:y=300:bordercolor=black:borderw=4[v${vIdx}]`);
+    filters.push(`[${vCurrent}]drawtext=textfile='${escapeFilterPath(qTxtPath)}':fontfile='${fontFile}':fontcolor=white:fontsize=60:x=(w-text_w)/2:y=300:bordercolor=black:borderw=4[v${vIdx}]`);
     vCurrent = `v${vIdx++}`;
 
     // Opções
     const optY: Record<string, number> = { A: 700, B: 850, C: 1000, D: 1150 };
     for (const opt of ['A', 'B', 'C', 'D']) {
-      filters.push(`[${vCurrent}]drawtext=textfile='${optTxtPaths[opt]}':fontfile=${fontFile}:fontcolor=white:fontsize=50:x=100:y=${optY[opt]}:bordercolor=black:borderw=3[v${vIdx}]`);
+      filters.push(`[${vCurrent}]drawtext=textfile='${escapeFilterPath(optTxtPaths[opt])}':fontfile='${fontFile}':fontcolor=white:fontsize=50:x=100:y=${optY[opt]}:bordercolor=black:borderw=3[v${vIdx}]`);
       vCurrent = `v${vIdx++}`;
     }
 
     // Timer (5 a 1)
     for (let i = 0; i < 5; i++) {
-      filters.push(`[${vCurrent}]drawtext=text='${5 - i}':fontfile=${fontFile}:fontcolor=yellow:fontsize=150:x=(w-text_w)/2:y=1400:bordercolor=black:borderw=5:enable='between(t,${qDur + i},${qDur + i + 1})'[v${vIdx}]`);
+      filters.push(`[${vCurrent}]drawtext=text='${5 - i}':fontfile='${fontFile}':fontcolor=yellow:fontsize=150:x=(w-text_w)/2:y=1400:bordercolor=black:borderw=5:enable='between(t,${qDur + i},${qDur + i + 1})'[v${vIdx}]`);
       vCurrent = `v${vIdx++}`;
     }
 
     // Highlight resposta correta (muda cor para verde no momento que a resposta é falada)
     const correctOpt = quiz.resposta_correta as string;
-    filters.push(`[${vCurrent}]drawtext=textfile='${optTxtPaths[correctOpt]}':fontfile=${fontFile}:fontcolor=green:fontsize=50:x=100:y=${optY[correctOpt]}:bordercolor=black:borderw=3:enable='gte(t,${qDur + 5})'[vout]`);
+    filters.push(`[${vCurrent}]drawtext=textfile='${escapeFilterPath(optTxtPaths[correctOpt])}':fontfile='${fontFile}':fontcolor=green:fontsize=50:x=100:y=${optY[correctOpt]}:bordercolor=black:borderw=3:enable='gte(t,${qDur + 5})'[vout]`);
 
     const filterGraph = filters.join('; ');
     const filterScriptPath = path.join(tempDir, 'filter.txt');
@@ -104,13 +109,25 @@ export const assembleVideo = async (
 
     const mixCmd = `ffmpeg -y ${bgInputArgs} -i "${audioData.qPath}" -i "${audioData.aPath}" -filter_complex_script "${filterScriptPath}" -map "[vout]" -map "[aout]" -c:v libx264 -c:a aac -pix_fmt yuv420p -shortest "${outputPath}"`;
 
-    console.log(`🎥 Executando FFmpeg...`);
-    execSync(mixCmd);
+    console.log(`🎥 Executando FFmpeg: ${mixCmd}`);
+    try {
+      execSync(mixCmd, { stdio: 'pipe' });
+    } catch (err: any) {
+      console.error('FFmpeg Execution Failed:', err.message);
+      if (err.stderr) console.error(err.stderr.toString());
+      throw err;
+    }
 
     console.log(`✅ Vídeo gerado com sucesso em: ${outputPath}`);
     return outputPath;
   } catch (error: any) {
     console.error('❌ Erro na montagem do vídeo:', error.message);
+    if (error.stderr) {
+      console.error('FFmpeg Standard Error:', error.stderr.toString());
+    }
+    if (error.stdout) {
+      console.error('FFmpeg Standard Output:', error.stdout.toString());
+    }
     throw new Error('Falha na geração do vídeo.');
   }
 };
