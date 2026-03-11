@@ -35,13 +35,17 @@ export const assembleVideo = async (
     const qDurStr = execSync(`ffprobe -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 "${audioData.qPath}"`).toString().trim();
     const qDur = parseFloat(qDurStr);
 
-    const bgFiles = fs.existsSync('assets/backgrounds') ? fs.readdirSync('assets/backgrounds') : [];
-    let bgVideo: string = bgFiles.length > 0 ? path.join('assets/backgrounds', bgFiles[0]) : '';
+    const bgFiles = fs.existsSync('assets/backgrounds') ? fs.readdirSync('assets/backgrounds').filter(file => file !== 'default.jpg') : [];
+    let bgVideo = bgFiles.length > 0 ? path.join('assets/backgrounds', bgFiles[0]) : '';
 
     if (!bgVideo) {
-      console.log('⚠️ Nenhum fundo encontrado. Gerando fundo preto em imagem...');
-      bgVideo = path.join(tempDir, 'bg_black.jpg');
-      execSync(`ffmpeg -y -f lavfi -i color=c=black:s=1080x1920:d=1 -frames:v 1 ${bgVideo}`);
+      console.log('⚠️ Nenhum fundo customizado encontrado. Usando fundo padrão...');
+      bgVideo = 'assets/backgrounds/default.jpg';
+      if (!fs.existsSync(bgVideo)) {
+        console.log('⚠️ Fundo padrão não encontrado. Gerando fundo azul padrão em imagem temporária...');
+        bgVideo = path.join(tempDir, 'default_bg.jpg');
+        execSync(`ffmpeg -y -f lavfi -i color=c=blue:s=1080x1920:d=1 -frames:v 1 ${bgVideo}`);
+      }
     }
 
     // Preparar arquivos de texto para o ffmpeg drawtext não sofrer com escape

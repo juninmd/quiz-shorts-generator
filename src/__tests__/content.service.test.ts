@@ -1,7 +1,7 @@
 import { describe, it, expect, vi } from 'vitest';
 import { generateQuiz } from '../content.service';
 
-// Mock da biblioteca ollama
+// Mock do Ollama chat
 vi.mock('ollama', () => ({
   default: {
     chat: vi.fn().mockResolvedValue({
