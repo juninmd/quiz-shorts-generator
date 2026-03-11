@@ -4,6 +4,22 @@ import path from 'path';
 import { Quiz } from './content.service';
 import { WordTimestamp } from './tts.service';
 
+const wrapText = (text: string, maxLen: number): string => {
+  const words = text.split(' ');
+  const lines: string[] = [];
+  let currentLine = '';
+  for (const word of words) {
+    if ((currentLine + word).length > maxLen) {
+      lines.push(currentLine.trim());
+      currentLine = word + ' ';
+    } else {
+      currentLine += word + ' ';
+    }
+  }
+  if (currentLine) lines.push(currentLine.trim());
+  return lines.join('\n');
+};
+
 export const assembleVideo = async (
   quiz: Quiz,
   audioData: { qPath: string; aPath: string; qWords: WordTimestamp[]; aWords: WordTimestamp[] },
@@ -12,31 +28,79 @@ export const assembleVideo = async (
   const tempDir = 'temp_assets';
   if (!fs.existsSync(tempDir)) fs.mkdirSync(tempDir);
 
-  const finalAudio = path.join(tempDir, 'final_audio.mp3');
-  const bgBlack = path.join(tempDir, 'bg_black.mp4');
-
-  console.log(`🎬 Processando vídeo de fundo...`);
+  console.log(`🎬 Processando vídeo...`);
 
   try {
-    // 1. Unir os dois áudios em um único arquivo (simples concatenação ffmpeg)
-    const concatCmd = `ffmpeg -y -i ${audioData.qPath} -i ${audioData.aPath} -filter_complex "[0:a][1:a]concat=n=2:v=0:a=1" ${finalAudio}`;
-    execSync(concatCmd);
+    // Determine a duração do áudio da pergunta
+    const qDurStr = execSync(`ffprobe -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 "${audioData.qPath}"`).toString().trim();
+    const qDur = parseFloat(qDurStr);
 
-    // 2. Verificar se existe vídeo de fundo, senão gera um fundo preto de 30s
     const bgFiles = fs.existsSync('assets/backgrounds') ? fs.readdirSync('assets/backgrounds') : [];
     let bgVideo = bgFiles.length > 0 ? path.join('assets/backgrounds', bgFiles[0]) : '';
 
     if (!bgVideo) {
-      console.log('⚠️ Nenhum fundo encontrado em assets/backgrounds. Gerando fundo preto...');
-      // Gera um fundo preto de 30 segundos
-      const genBgCmd = `ffmpeg -y -f lavfi -i color=c=black:s=1080x1920:d=30 -pix_fmt yuv420p ${bgBlack}`;
-      execSync(genBgCmd);
-      bgVideo = bgBlack;
+      console.log('⚠️ Nenhum fundo encontrado. Gerando fundo preto em imagem...');
+      bgVideo = path.join(tempDir, 'bg_black.jpg');
+      execSync(`ffmpeg -y -f lavfi -i color=c=black:s=1080x1920:d=1 -frames:v 1 ${bgVideo}`);
     }
 
-    // 3. Montar o vídeo final unindo o fundo com o áudio final
-    console.log(`🎥 Mixando áudio com o vídeo: ${bgVideo}`);
-    const mixCmd = `ffmpeg -y -i ${bgVideo} -i ${finalAudio} -c:v copy -c:a aac -map 0:v:0 -map 1:a:0 -shortest ${outputPath}`;
+    // Preparar arquivos de texto para o ffmpeg drawtext não sofrer com escape
+    const qTxtPath = path.join(tempDir, 'q.txt');
+    fs.writeFileSync(qTxtPath, wrapText(quiz.pergunta, 35));
+
+    const optTxtPaths: Record<string, string> = {};
+    for (const opt of ['A', 'B', 'C', 'D']) {
+      const p = path.join(tempDir, `opt${opt}.txt`);
+      // @ts-ignore - indexing is safe here
+      fs.writeFileSync(p, wrapText(`${opt}) ${quiz.opcoes[opt]}`, 40));
+      optTxtPaths[opt] = p;
+    }
+
+    const fontFile = '/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf';
+
+    const filters: string[] = [];
+
+    // 1. Áudio: padding de 5 segs na pergunta, depois concatena com a resposta
+    filters.push(`[1:a]apad=pad_dur=5[q_padded]; [q_padded][2:a]concat=n=2:v=0:a=1[aout]`);
+
+    // 2. Vídeo: scale, crop
+    filters.push(`[0:v]scale=1080:1920:force_original_aspect_ratio=increase,crop=1080:1920[v0]`);
+
+    let vCurrent = 'v0';
+    let vIdx = 1;
+
+    // Pergunta
+    filters.push(`[${vCurrent}]drawtext=textfile='${qTxtPath}':fontfile=${fontFile}:fontcolor=white:fontsize=60:x=(w-text_w)/2:y=300:bordercolor=black:borderw=4[v${vIdx}]`);
+    vCurrent = `v${vIdx++}`;
+
+    // Opções
+    const optY: Record<string, number> = { A: 700, B: 850, C: 1000, D: 1150 };
+    for (const opt of ['A', 'B', 'C', 'D']) {
+      filters.push(`[${vCurrent}]drawtext=textfile='${optTxtPaths[opt]}':fontfile=${fontFile}:fontcolor=white:fontsize=50:x=100:y=${optY[opt]}:bordercolor=black:borderw=3[v${vIdx}]`);
+      vCurrent = `v${vIdx++}`;
+    }
+
+    // Timer (5 a 1)
+    for (let i = 0; i < 5; i++) {
+      filters.push(`[${vCurrent}]drawtext=text='${5 - i}':fontfile=${fontFile}:fontcolor=yellow:fontsize=150:x=(w-text_w)/2:y=1400:bordercolor=black:borderw=5:enable='between(t,${qDur + i},${qDur + i + 1})'[v${vIdx}]`);
+      vCurrent = `v${vIdx++}`;
+    }
+
+    // Highlight resposta correta (muda cor para verde no momento que a resposta é falada)
+    const correctOpt = quiz.resposta_correta as string;
+    filters.push(`[${vCurrent}]drawtext=textfile='${optTxtPaths[correctOpt]}':fontfile=${fontFile}:fontcolor=green:fontsize=50:x=100:y=${optY[correctOpt]}:bordercolor=black:borderw=3:enable='gte(t,${qDur + 5})'[vout]`);
+
+    const filterGraph = filters.join('; ');
+    const filterScriptPath = path.join(tempDir, 'filter.txt');
+    fs.writeFileSync(filterScriptPath, filterGraph);
+
+    // O fundo pode ser imagem ou vídeo. Se for imagem, precisa do -loop 1
+    const isImage = bgVideo.endsWith('.jpg') || bgVideo.endsWith('.png');
+    const bgInputArgs = isImage ? `-loop 1 -framerate 30 -i "${bgVideo}"` : `-i "${bgVideo}"`;
+
+    const mixCmd = `ffmpeg -y ${bgInputArgs} -i "${audioData.qPath}" -i "${audioData.aPath}" -filter_complex_script "${filterScriptPath}" -map "[vout]" -map "[aout]" -c:v libx264 -c:a aac -pix_fmt yuv420p -shortest "${outputPath}"`;
+
+    console.log(`🎥 Executando FFmpeg...`);
     execSync(mixCmd);
 
     console.log(`✅ Vídeo gerado com sucesso em: ${outputPath}`);
