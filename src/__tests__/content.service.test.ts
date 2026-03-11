@@ -1,22 +1,26 @@
 import { describe, it, expect, vi } from 'vitest';
 import { generateQuiz } from '../content.service';
 
-// Mock do generateObject do Vercel AI SDK
-vi.mock('ai', () => ({
-  generateObject: vi.fn().mockResolvedValue({
-    object: {
-      tema: 'jogos',
-      pergunta: 'Quem é o protagonista de The Legend of Zelda?',
-      opcoes: {
-        A: 'Zelda',
-        B: 'Link',
-        C: 'Ganon',
-        D: 'Epona'
-      },
-      resposta_correta: 'B',
-      fato_curioso: 'Embora o jogo se chame Zelda, o protagonista é o Link.'
-    }
-  })
+// Mock da biblioteca ollama
+vi.mock('ollama', () => ({
+  default: {
+    chat: vi.fn().mockResolvedValue({
+      message: {
+        content: JSON.stringify({
+          tema: 'jogos',
+          pergunta: 'Quem é o protagonista de The Legend of Zelda?',
+          opcoes: {
+            A: 'Zelda',
+            B: 'Link',
+            C: 'Ganon',
+            D: 'Epona'
+          },
+          resposta_correta: 'B',
+          fato_curioso: 'Embora o jogo se chame Zelda, o protagonista é o Link.'
+        })
+      }
+    })
+  }
 }));
 
 describe('ContentService', () => {
