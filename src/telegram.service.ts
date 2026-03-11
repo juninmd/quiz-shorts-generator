@@ -1,0 +1,34 @@
+import { Bot, InputFile } from 'grammy';
+import dotenv from 'dotenv';
+
+dotenv.config();
+
+export const sendVideoToTelegram = async (
+  videoPath: string, 
+  caption: string
+): Promise<boolean> => {
+  const token = process.env.TELEGRAM_TOKEN;
+  const chatId = process.env.TELEGRAM_CHAT_ID;
+
+  if (!token || !chatId) {
+    console.error('Erro: TELEGRAM_TOKEN ou TELEGRAM_CHAT_ID não configurados no .env');
+    return false;
+  }
+
+  const bot = new Bot(token);
+
+  console.log(`📤 Enviando ${videoPath} para o Telegram...`);
+
+  try {
+    await bot.api.sendVideo(chatId, new InputFile(videoPath), {
+      caption: caption,
+      supports_streaming: true,
+      parse_mode: 'HTML',
+    });
+    console.log('✅ Vídeo enviado com sucesso!');
+    return true;
+  } catch (error) {
+    console.error('❌ Erro ao enviar para o Telegram:', error);
+    return false;
+  }
+};

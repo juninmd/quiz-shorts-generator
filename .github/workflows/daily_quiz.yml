@@ -1,0 +1,47 @@
+name: Daily Quiz Shorts Generator (Node.js/TS)
+
+on:
+  schedule:
+    - cron: '0 9 * * *' # Roda todos os dias às 09:00 UTC (06:00 Brasília)
+  workflow_dispatch: # Permite rodar manualmente para testar
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v4
+
+    - name: Install System Dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y ffmpeg libass-dev ttf-mscorefonts-installer
+        # Adiciona fontes extras para as legendas
+        sudo fc-cache -f -v
+
+    - name: Install pnpm
+      uses: pnpm/action-setup@v4
+      with:
+        version: 10
+
+    - name: Set up Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+        cache: 'pnpm'
+
+    - name: Install Project Dependencies
+      run: pnpm install
+
+    - name: Create Required Folders
+      run: mkdir -p assets/backgrounds assets/music assets/fonts temp_assets
+
+    - name: Run Quiz Generator
+      env:
+        TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
+        TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        OLLAMA_HOST: ${{ secrets.OLLAMA_HOST }}
+      run: |
+        # Inicia a geração do quiz
+        pnpm start
