@@ -19,7 +19,7 @@ async function main() {
     console.time('TTS_Generation');
     const [qNarration, aNarration] = await Promise.all([
       generateNarration(`${quiz.pergunta}`, 'question'),
-      generateNarration(`A resposta correta é a letra ${quiz.resposta_correta}: ${quiz.opcoes[quiz.resposta_correta]}. ${quiz.fato_curioso}`, 'answer')
+      generateNarration(`A resposta correta é a letra ${quiz.resposta_correta}: ${quiz.opcoes[quiz.resposta_correta]}. ${quiz.fato_curioso}. E aí, você sabia? Se gostou da curiosidade, curta o vídeo e se inscreva no canal para mais vídeos como este!`, 'answer')
     ]);
     console.timeEnd('TTS_Generation');
 

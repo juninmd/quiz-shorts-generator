@@ -89,7 +89,7 @@ export const assembleVideo = async (
 
     const optY: Record<string, number> = { A: 870, B: 1120, C: 1370, D: 1620 };
     const correct = quiz.resposta_correta as 'A' | 'B' | 'C' | 'D';
-    const revealTime = qDur + 5;
+    const revealTime = qDur + 6;
     
     for (const opt of ['A', 'B', 'C', 'D'] as const) {
       if (optTxtPaths[opt]) {
@@ -108,8 +108,8 @@ export const assembleVideo = async (
       }
     }
 
-    for (let i = 0; i < 5; i++) {
-      filters.push(`[${vC}]drawtext=text='${5 - i}':fontfile='${fontFile}':fontcolor=yellow:fontsize=150:x=(w-text_w)/2:y=1800:bordercolor=black:borderw=5:enable='between(t,${qDur + i},${qDur + i + 1})'[v${vI}]`);
+    for (let i = 0; i < 6; i++) {
+      filters.push(`[${vC}]drawtext=text='${6 - i}':fontfile='${fontFile}':fontcolor=yellow:fontsize=150:x=(w-text_w)/2:y=1800:bordercolor=black:borderw=5:enable='between(t,${qDur + i},${qDur + i + 1})'[v${vI}]`);
       vC = `v${vI++}`;
     }
 
@@ -117,12 +117,12 @@ export const assembleVideo = async (
 
     // Filters de Áudio
     let audioFilters: string[] = [];
-    audioFilters.push(`[1:a]apad=pad_dur=5[qp]`);
+    audioFilters.push(`[1:a]apad=pad_dur=6[qp]`);
     let lastAudioLabel = '[qp]';
     let inI = 3;
 
     if (hasBeep) {
-      for (let i = 0; i < 5; i++) {
+      for (let i = 0; i < 6; i++) {
         const d = Math.round((qDur + i) * 1000);
         const beepLabel = `b${i}`;
         const mixedLabel = `m${i}`;

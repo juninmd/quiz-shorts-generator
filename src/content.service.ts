@@ -21,7 +21,7 @@ export type Quiz = z.infer<typeof quizSchema>;
 
 export const generateQuiz = async (): Promise<Quiz> => {
   const modelName = process.env.OLLAMA_MODEL || 'qwen3:8b';
-  const topics = ['jogos', 'filmes', 'séries', 'animes', 'curiosidades gerais'];
+  const topics = ['jogos', 'filmes', 'séries', 'animes', 'curiosidades gerais', 'bíblia'];
   const topic = topics[Math.floor(Math.random() * topics.length)];
 
   console.log(`🤖 Usando biblioteca oficial Ollama com modelo: ${modelName}`);
