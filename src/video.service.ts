@@ -86,6 +86,10 @@ export const assembleVideo = async (
     const qPath = normalizePath(audioData.qPath);
     const aPath = normalizePath(audioData.aPath);
     const qDur = parseFloat(execSync(`ffprobe -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 "${qPath}"`).toString().trim());
+    const aDur = parseFloat(execSync(`ffprobe -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 "${aPath}"`).toString().trim());
+
+    // later we use totalSeconds to estimate %; compute from actual audio lengths + 6 reveal + 6 countdown
+    const totalSeconds = aDur + 6; // answer audio determines length (question padded inside filters)
 
     const musicPath = normalizePath('assets/music/background.mp3');
     const beepPath = normalizePath('assets/music/beep.mp3');
@@ -227,8 +231,8 @@ export const assembleVideo = async (
     args.push('-filter_complex', filters.join(';'), '-map', '[vout]', '-map', '[aout]');
     args.push('-c:v', 'libx264', '-c:a', 'aac', '-pix_fmt', 'yuv420p', '-shortest', normalizePath(outputPath));
 
-    // approximate length: question duration + 6s reveal + 6s countdown
-    const totalSeconds = qDur + 12;
+    // totalSeconds already computed from actual audio durations earlier
+    // (answer audio + reveal).
 
     console.log(`🎥 Processando FFmpeg... (Fundo: ${bgSelected || 'Padrão'})`);
 
