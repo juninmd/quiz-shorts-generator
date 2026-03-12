@@ -12,7 +12,7 @@ Gerador automático de vídeos curtos (9:16) no estilo Quiz para YouTube Shorts,
 ## 🛠️ Tech Stack
 - **Runtime**: Node.js 20+ (Execução via `tsx`)
 - **IA**: Vercel AI SDK com provedor `ollama-ai-provider`
-- **Vídeo**: `fluent-ffmpeg` com suporte a filtros complexos e legendas `.ass`
+- **Vídeo**: `fluent-ffmpeg` com suporte a filtros complexos e legendas `.ass`. O encoder agora usa `-preset ultrafast`/`-threads 0` para reduzir o tempo de criação em CI.
 - **TTS**: `edge-tts-node`
 - **Telegram**: `grammy` (Bot Framework)
 - **Testes**: `vitest` com cobertura de código

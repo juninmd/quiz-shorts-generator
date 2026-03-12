@@ -229,7 +229,17 @@ export const assembleVideo = async (
     // hide the huge ffmpeg banner to reduce noise
     const args = ['-y', '-hide_banner', ...ffmpegInputs];
     args.push('-filter_complex', filters.join(';'), '-map', '[vout]', '-map', '[aout]');
-    args.push('-c:v', 'libx264', '-c:a', 'aac', '-pix_fmt', 'yuv420p', '-shortest', normalizePath(outputPath));
+    // speed up encoding by using a faster preset and auto threads; quality should still be fine for short-form content
+    args.push(
+      '-c:v', 'libx264',
+      '-preset', 'ultrafast',
+      '-crf', '23',
+      '-threads', '0',
+      '-c:a', 'aac',
+      '-pix_fmt', 'yuv420p',
+      '-shortest',
+      normalizePath(outputPath)
+    );
 
     // totalSeconds already computed from actual audio durations earlier
     // (answer audio + reveal).
