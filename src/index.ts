@@ -46,7 +46,7 @@ async function main() {
       if (fs.existsSync('temp_assets')) {
         fs.rmSync('temp_assets', { recursive: true, force: true });
       }
-      if (fs.existsSync(outputFileName)) {
+      if (fs.existsSync(outputFileName) && !process.env.GITHUB_ACTIONS) {
         fs.unlinkSync(outputFileName);
       }
       console.log('✨ Processo concluído com sucesso!');

@@ -1,8 +1,12 @@
-import ollama from 'ollama';
+import { Ollama } from 'ollama';
 import { z } from 'zod';
 import dotenv from 'dotenv';
 
 dotenv.config();
+
+const ollama = new Ollama({
+  host: process.env.OLLAMA_HOST || 'http://localhost:11434'
+});
 
 const quizSchema = z.object({
   tema: z.string(),
