@@ -206,6 +206,7 @@ export const assembleVideo = async (
 
     await new Promise<void>((resolve, reject) => {
       const ff = spawn('ffmpeg', args);
+      let lastPct = -1;
 
       ff.stderr.on('data', (chunk: Buffer | string) => {
         const str = chunk.toString();
@@ -224,7 +225,10 @@ export const assembleVideo = async (
           if (m && m[1]) {
             const secs = hmsToSeconds(m[1]);
             const pct = Math.min(100, Math.round((secs / totalSeconds) * 100));
-            process.stdout.write(`\r⏳ ${pct}%`);
+            if (pct !== lastPct) {
+              process.stdout.write(`\r⏳ ${pct}%`);
+              lastPct = pct;
+            }
           }
         }
       });
