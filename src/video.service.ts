@@ -38,11 +38,48 @@ export const assembleVideo = async (
     const fontFile = 'assets/fonts/arialbd.ttf';
     if (!fs.existsSync(fontFile)) {
       fs.mkdirSync('assets/fonts', { recursive: true });
-      try {
-        fs.copyFileSync('C:/Windows/Fonts/arialbd.ttf', fontFile);
-      } catch (e) {
-        console.warn('⚠️ Não foi possível copiar a fonte automaticamente, tentando via shell...');
-        execSync(`cmd /c copy C:\\Windows\\Fonts\\arialbd.ttf assets\\fonts\\arialbd.ttf`);
+
+      // on Linux the mscorefonts package installs fonts under /usr/share/fonts
+      const tryCopy = (src: string) => {
+        try {
+          if (fs.existsSync(src)) {
+            fs.copyFileSync(src, fontFile);
+            return true;
+          }
+        } catch {}
+        return false;
+      };
+
+      let copied = false;
+      if (process.platform === 'win32') {
+        copied = tryCopy('C:/Windows/Fonts/arialbd.ttf');
+        if (!copied) {
+          console.warn('⚠️ Falha ao copiar fonte via API, tentando shell...');
+          try {
+            execSync(`cmd /c copy C:\\Windows\\Fonts\\arialbd.ttf assets\\fonts\\arialbd.ttf`);
+            copied = true;
+          } catch {}
+        }
+      } else {
+        // common path for msttcorefonts on Debian/Ubuntu
+        copied = tryCopy('/usr/share/fonts/truetype/msttcorefonts/Arial_Bold.ttf');
+        if (!copied) {
+          // fallback to any Arial variant already installed
+          const candidates = [
+            '/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf',
+            '/usr/share/fonts/truetype/liberation/LiberationSans-Bold.ttf'
+          ];
+          for (const c of candidates) {
+            if (tryCopy(c)) {
+              copied = true;
+              break;
+            }
+          }
+        }
+      }
+
+      if (!copied) {
+        console.warn('⚠️ Não foi possível copiar automaticamente a fonte Arial; você pode precisar colocá-la em assets/fonts.');
       }
     }
 
@@ -208,14 +245,22 @@ export const assembleVideo = async (
       const ff = spawn('ffmpeg', args);
       let lastPct = -1;
 
+      // keep-alive log so CI doesn't kill job after minutes of silence
+      const keepAlive = setInterval(() => {
+        console.log('⏳ ffmpeg still running...');
+      }, 5 * 60 * 1000);
+
       ff.stderr.on('data', (chunk: Buffer | string) => {
         const str = chunk.toString();
-        // split into lines to filter
+        // always print raw ffmpeg output so CI sees activity
+        process.stdout.write(str);
+
+        // split into lines to filter for progress computation
         for (const rawLine of str.split(/\r?\n/)) {
           const line = rawLine.trim();
           if (!line) continue;
 
-          // log only metadata/info lines
+          // log important metadata/info lines as before
           if (/^(Input #|Duration:|Stream #|Metadata:)/.test(line)) {
             console.log(line);
           }
@@ -234,7 +279,10 @@ export const assembleVideo = async (
       });
 
       ff.on('close', (code: number | null) => {
+        clearInterval(keepAlive);
         process.stdout.write('\n');
+        // ensure we show completion percentage
+        process.stdout.write(`\r⏳ 100%\n`);
         if (code === 0) resolve();
         else reject(new Error(`FFmpeg exited with ${code}`));
       });

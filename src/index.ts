@@ -50,8 +50,12 @@ async function main() {
         fs.unlinkSync(outputFileName);
       }
       console.log('✨ Processo concluído com sucesso!');
+      // close the process explicitly so CI or long‑running runners don't hang
+      process.exit(0);
     } else {
       console.warn('⚠️ O vídeo não foi enviado, mantendo arquivos para depuração.');
+      // still exit with a nonzero status so the workflow can detect failure
+      process.exit(1);
     }
 
   } catch (error) {

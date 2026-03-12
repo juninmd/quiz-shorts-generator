@@ -4,7 +4,7 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 export const sendVideoToTelegram = async (
-  videoPath: string, 
+  videoPath: string,
   caption: string
 ): Promise<boolean> => {
   const token = process.env.TELEGRAM_TOKEN;
@@ -32,5 +32,10 @@ export const sendVideoToTelegram = async (
     const errorMessage = (error.message || String(error)).replace(token, '***TOKEN_OCULTO***');
     console.error('❌ Erro ao enviar para o Telegram:', errorMessage);
     return false;
+  } finally {
+    // clean up bot internals (HTTP agent) even though we didn't start polling
+    try {
+      await bot.stop();
+    } catch {}
   }
 };

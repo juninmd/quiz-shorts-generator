@@ -24,7 +24,9 @@ Gerador automático de vídeos curtos (9:16) no estilo Quiz para YouTube Shorts,
 - [pnpm](https://pnpm.io/) (Gerenciador de pacotes)
 - [FFmpeg](https://ffmpeg.org/) instalado no sistema (com suporte a `libass` para as legendas)
 - [Ollama](https://ollama.com/) rodando localmente ou em um servidor acessível.
+- **Linux users:** instale `ttf-mscorefonts-installer` (ou similar) para garantir que o script consiga copiar uma fonte Arial; o fluxo agora também tenta DejaVu/Liberation como fallback.
 
+O projeto foi testado em Ubuntu (via GitHub Actions) e Windows; não há dependências específicas de plataforma além da manipulação de fontes.
 ### 2. Instalação
 Clone o repositório e instale as dependências:
 ```bash
@@ -45,13 +47,23 @@ OLLAMA_HOST=http://localhost:11434/api
 ```
 
 ## 📅 GitHub Actions (Automação)
-O workflow `.github/workflows/daily_quiz.yml` está configurado para rodar diariamente. 
+O workflow `.github/workflows/daily_quiz.yml` está configurado para rodar diariamente.
 
 ### Configuração de Segredos (GitHub Secrets)
 Adicione os seguintes segredos no seu repositório do GitHub:
 - `TELEGRAM_TOKEN`: Token do seu bot.
 - `TELEGRAM_CHAT_ID`: ID do canal/grupo.
 - `OLLAMA_HOST`: URL pública do seu Ollama (use [Ngrok](https://ngrok.com/) ou [Cloudflare Tunnel] para expor seu host local).
+
+> 🛑 A partir das últimas atualizações, o script encerra o processo automaticamente assim que o vídeo é gerado e enviado ao Telegram. Isso evita que runners ou instâncias em nuvem fiquem aguardando indefinidamente após a conclusão.
+
+
+### ⚠️ Observações sobre CI
+
+O gerador de vídeos usa **FFmpeg**, que costuma interromper o reporte de progresso alguns segundos antes de encerrar (por volta de 90‑95 %). No GitHub Actions isso faz com que o passo `pnpm start` pareça travado e seja abortado por inatividade após 10 minutos, mesmo que o processo ainda esteja rodando. Para contornar:
+
+- o código agora despeja **toda a saída do FFmpeg** e imprime mensagens de keep‑alive (`ffmpeg still running...`) a cada 5 minutos, garantindo que a ação não expire;
+- técnica similar pode ser usada em outros ambientes longos, ou ajuste `timeout-minutes` na workflow.
 
 ## 🧪 Testes
 Para rodar os testes e verificar a cobertura:
