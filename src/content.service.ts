@@ -34,8 +34,8 @@ export const generateQuiz = async (): Promise<Quiz> => {
     Seja um verificador de fatos rigoroso. 
     Garanta precisão histórica/técnica e um fato curioso que valide a resposta. 
     As frases devem ser muito curtas e diretas, pois o vídeo terá no máximo 1 minuto.
-    A pergunta deve ser bem curta e as opções devem ter poucas palavras.
-    O fato curioso também deve ser breve.
+    A pergunta deve ter no máximo 60 caracteres e as opções no máximo 20 caracteres cada.
+    O fato curioso deve ter no máximo 100 caracteres.
     Responda APENAS com um objeto JSON no formato:
     {
         "tema": "${topic}",

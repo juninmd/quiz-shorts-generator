@@ -88,8 +88,8 @@ export const assembleVideo = async (
     const qDur = parseFloat(execSync(`ffprobe -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 "${qPath}"`).toString().trim());
     const aDur = parseFloat(execSync(`ffprobe -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 "${aPath}"`).toString().trim());
 
-    // later we use totalSeconds to estimate %; compute from actual audio lengths + 6 reveal + 6 countdown
-    const totalSeconds = aDur + 6; // answer audio determines length (question padded inside filters)
+    // later we use totalSeconds to estimate %; compute from actual audio lengths + 5 reveal + 5 countdown
+    const totalSeconds = aDur + 5; // answer audio determines length (question padded inside filters)
 
     const musicPath = normalizePath('assets/music/background.mp3');
     const beepPath = normalizePath('assets/music/beep.mp3');
@@ -98,14 +98,15 @@ export const assembleVideo = async (
     const hasBeep = fs.existsSync(beepPath);
     const hasLogo = fs.existsSync(logoPath);
 
-    const bgFiles = fs.existsSync('assets/backgrounds') ? fs.readdirSync('assets/backgrounds').filter(f => f.endsWith('.png') || f.endsWith('.jpg')) : [];
+    const bgFiles = fs.existsSync('assets/backgrounds') ? fs.readdirSync('assets/backgrounds').filter(f => f.endsWith('.png') || f.endsWith('.jpg') || f.endsWith('.mp4')) : [];
     const bgSelected = bgFiles.length > 0 ? bgFiles[Math.floor(Math.random() * bgFiles.length)] : undefined;
     let bgVideo = bgSelected ? path.resolve('assets/backgrounds', bgSelected) : '';
 
     if (!bgVideo) {
-      bgVideo = path.join(tempDir, 'bg_black.jpg');
+      bgVideo = path.join(tempDir, 'bg_default.jpg');
       if (!fs.existsSync(bgVideo)) {
-        execSync(`ffmpeg -y -f lavfi -i color=c=black:s=1080x1920:d=1 -frames:v 1 "${normalizePath(bgVideo)}"`);
+        // Generate a nice dark blue background instead of just black
+        execSync(`ffmpeg -y -f lavfi -i color=c=darkblue:s=1080x1920:d=1 -frames:v 1 "${normalizePath(bgVideo)}"`);
       }
     }
 
@@ -173,7 +174,7 @@ export const assembleVideo = async (
 
     const optY: Record<string, number> = { A: 870, B: 1120, C: 1370, D: 1620 };
     const correct = quiz.resposta_correta as 'A' | 'B' | 'C' | 'D';
-    const revealTime = qDur + 6;
+    const revealTime = qDur + 5;
 
     for (const opt of ['A', 'B', 'C', 'D'] as const) {
       if (optTxtPaths[opt]) {
@@ -181,8 +182,8 @@ export const assembleVideo = async (
           // Render white until reveal
           filters.push(`[${vC}]drawtext=textfile='${esc(optTxtPaths[opt])}':fontfile='${fontFile}':fontcolor=white:fontsize=48:x=(w-text_w)/2:y=${optY[opt]}:bordercolor=black:borderw=3:enable='lt(t,${revealTime})'[v${vI}]`);
           vC = `v${vI++}`;
-          // Render green after reveal
-          filters.push(`[${vC}]drawtext=textfile='${esc(optTxtPaths[opt])}':fontfile='${fontFile}':fontcolor=green:fontsize=48:x=(w-text_w)/2:y=${optY[opt]}:bordercolor=black:borderw=3:enable='gte(t,${revealTime})'[v${vI}]`);
+          // Render green after reveal - MARCA A RESPOSTA CORRETA VISUALMENTE com texto verde e fundo amarelo (box)
+          filters.push(`[${vC}]drawtext=textfile='${esc(optTxtPaths[opt])}':fontfile='${fontFile}':fontcolor=green:fontsize=48:x=(w-text_w)/2:y=${optY[opt]}:bordercolor=black:borderw=3:box=1:boxcolor=yellow@0.8:boxborderw=10:enable='gte(t,${revealTime})'[v${vI}]`);
           vC = `v${vI++}`;
         } else {
           // Normal white option
@@ -192,8 +193,9 @@ export const assembleVideo = async (
       }
     }
 
-    for (let i = 0; i < 6; i++) {
-      filters.push(`[${vC}]drawtext=text='${6 - i}':fontfile='${fontFile}':fontcolor=yellow:fontsize=150:x=(w-text_w)/2:y=1800:bordercolor=black:borderw=5:enable='between(t,${qDur + i},${qDur + i + 1})'[v${vI}]`);
+    // TIMER DE ALGUNS SEGUNDOS (5 segundos)
+    for (let i = 0; i < 5; i++) {
+      filters.push(`[${vC}]drawtext=text='${5 - i}':fontfile='${fontFile}':fontcolor=yellow:fontsize=150:x=(w-text_w)/2:y=1800:bordercolor=black:borderw=5:enable='between(t,${qDur + i},${qDur + i + 1})'[v${vI}]`);
       vC = `v${vI++}`;
     }
 
@@ -201,11 +203,11 @@ export const assembleVideo = async (
 
     // Filters de Áudio
     let audioFilters: string[] = [];
-    audioFilters.push(`[1:a]apad=pad_dur=6[qp]`);
+    audioFilters.push(`[1:a]apad=pad_dur=5[qp]`);
     let lastAudioLabel = '[qp]';
 
     if (hasBeep && beepIdx !== -1) {
-      for (let i = 0; i < 6; i++) {
+      for (let i = 0; i < 5; i++) {
         const d = Math.round((qDur + i) * 1000);
         const beepLabel = `b${i}`;
         const mixedLabel = `m${i}`;
