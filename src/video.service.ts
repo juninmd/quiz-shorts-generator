@@ -87,9 +87,13 @@ export const assembleVideo = async (
     vC = `v${vI++}`;
 
     const optY: Record<string, number> = { A: 700, B: 850, C: 1000, D: 1150 };
-    for (const opt of ['A', 'B', 'C', 'D']) {
+    const correct = quiz.resposta_correta as 'A' | 'B' | 'C' | 'D';
+    for (const opt of ['A', 'B', 'C', 'D'] as const) {
       if (optTxtPaths[opt]) {
-        filters.push(`[${vC}]drawtext=textfile='${esc(optTxtPaths[opt])}':fontfile='${fontFile}':fontcolor=white:fontsize=50:x=100:y=${optY[opt]}:bordercolor=black:borderw=3[v${vI}]`);
+        const colorKey = opt === correct ? 'fontcolor_expr' : 'fontcolor';
+        const colorVal = opt === correct ? `'if(gte(t,${qDur + 5}),green,white)'` : 'white';
+        // Ajustado para centralizar as opções (x=(w-text_w)/2) para combinar com os novos templates
+        filters.push(`[${vC}]drawtext=textfile='${esc(optTxtPaths[opt])}':fontfile='${fontFile}':${colorKey}=${colorVal}:fontsize=50:x=(w-text_w)/2:y=${optY[opt]}:bordercolor=black:borderw=3[v${vI}]`);
         vC = `v${vI++}`;
       }
     }
@@ -99,43 +103,51 @@ export const assembleVideo = async (
       vC = `v${vI++}`;
     }
 
-    const correct = quiz.resposta_correta as keyof typeof optTxtPaths;
-    if (optTxtPaths[correct]) {
-      filters.push(`[${vC}]drawtext=textfile='${esc(optTxtPaths[correct])}':fontfile='${fontFile}':fontcolor=green:fontsize=50:x=100:y=${optY[correct]}:bordercolor=black:borderw=3:enable='gte(t,${qDur + 5})'[vout]`);
-    } else {
-      filters.push(`[${vC}]copy[vout]`);
-    }
+    filters.push(`[${vC}]copy[vout]`);
 
     // Filters de Áudio
-    let curA = '[1:a]apad=pad_dur=5[qp]';
-    let lastA = '[qp]';
+    let audioFilters: string[] = [];
+    audioFilters.push(`[1:a]apad=pad_dur=5[qp]`);
+    let lastAudioLabel = '[qp]';
     let inI = 3;
 
     if (hasBeep) {
       for (let i = 0; i < 5; i++) {
         const d = Math.round((qDur + i) * 1000);
-        curA += `;[${inI}:a]adelay=${d}|${d}[b${i}];${lastA}[b${i}]amix=inputs=2:dropout_transition=0:normalize=0[m${i}]`;
-        lastA = `[m${i}]`;
+        const beepLabel = `b${i}`;
+        const mixedLabel = `m${i}`;
+        audioFilters.push(`[${inI}:a]adelay=${d}|${d}[${beepLabel}]`);
+        audioFilters.push(`${lastAudioLabel}[${beepLabel}]amix=inputs=2:dropout_transition=0:normalize=0[${mixedLabel}]`);
+        lastAudioLabel = `[${mixedLabel}]`;
       }
       inI++;
     }
 
-    curA += `;${lastA}[qr];[qr][2:a]concat=n=2:v=0:a=1[base]`;
+    audioFilters.push(`${lastAudioLabel}[2:a]concat=n=2:v=0:a=1[base]`);
 
     if (hasMusic) {
-      curA += `;[${inI}:a]aloop=loop=-1:size=2e9,volume=0.1[bgm];[base][bgm]amix=inputs=2:duration=shortest[aout]`;
+      audioFilters.push(`[${inI}:a]aloop=loop=-1:size=2e9,volume=0.1[bgm]`);
+      audioFilters.push(`[base][bgm]amix=inputs=2:duration=shortest[aout]`);
     } else {
-      curA += `;[base]volume=1.0[aout]`;
+      audioFilters.push(`[base]volume=1.0[aout]`);
     }
-    filters.push(curA);
+    filters.push(audioFilters.join(';'));
+
 
     const isImg = bgVideo.toLowerCase().match(/\.(jpg|png)$/);
-    const args = [
-      '-y', ...(isImg ? ['-loop', '1', '-framerate', '30'] : []),
-      '-i', normalizePath(bgVideo), '-i', qPath, '-i', aPath
-    ];
+    const args = ['-y'];
+
+    if (isImg) {
+      args.push('-loop', '1', '-framerate', '30', '-i', normalizePath(bgVideo));
+    } else {
+      // Se for vídeo, fazemos loop infinito para garantir que cubra todo o áudio
+      args.push('-stream_loop', '-1', '-i', normalizePath(bgVideo));
+    }
+
+    args.push('-i', qPath, '-i', aPath);
     if (hasBeep) args.push('-i', normalizePath(beepPath));
     if (hasMusic) args.push('-i', normalizePath(musicPath));
+
     args.push('-filter_complex', filters.join(';'), '-map', '[vout]', '-map', '[aout]');
     args.push('-c:v', 'libx264', '-c:a', 'aac', '-pix_fmt', 'yuv420p', '-shortest', normalizePath(outputPath));
 
