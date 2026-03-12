@@ -14,13 +14,18 @@ async function main() {
     const quiz = await generateQuiz();
     console.log(`✅ Quiz gerado sobre: ${quiz.tema}`);
 
-    // 2. Gerar Narrações (TTS)
-    console.log('🗣️ Gerando narração (Edge-TTS)...');
-    const qNarration = await generateNarration(`${quiz.pergunta}`, 'question');
-    const aNarration = await generateNarration(`A resposta correta é a letra ${quiz.resposta_correta}: ${quiz.opcoes[quiz.resposta_correta]}. ${quiz.fato_curioso}`, 'answer');
+    // 2. Gerar Narrações (TTS) em paralelo
+    console.log('🗣️ Gerando narrações (Edge-TTS) em paralelo...');
+    console.time('TTS_Generation');
+    const [qNarration, aNarration] = await Promise.all([
+      generateNarration(`${quiz.pergunta}`, 'question'),
+      generateNarration(`A resposta correta é a letra ${quiz.resposta_correta}: ${quiz.opcoes[quiz.resposta_correta]}. ${quiz.fato_curioso}`, 'answer')
+    ]);
+    console.timeEnd('TTS_Generation');
 
     // 3. Montar Vídeo (FFmpeg)
     console.log('🎬 Montando o vídeo (FFmpeg)...');
+    console.time('Video_Assembly');
     const outputFileName = `quiz_${quiz.tema.replace(/\s+/g, '_')}.mp4`;
     await assembleVideo(quiz, {
       qPath: qNarration.audioPath,
@@ -28,6 +33,7 @@ async function main() {
       qWords: qNarration.wordTimestamps,
       aWords: aNarration.wordTimestamps
     }, outputFileName);
+    console.timeEnd('Video_Assembly');
 
     // 4. Enviar para Telegram
     console.log('📤 Enviando para o Telegram...');
@@ -50,6 +56,7 @@ async function main() {
 
   } catch (error) {
     console.error('❌ Erro no processo principal:', error);
+    throw error; // Re-throw to be caught by the outer catch and exit with 1
   }
 }
 

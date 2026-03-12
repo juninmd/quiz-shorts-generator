@@ -22,7 +22,7 @@ const vttTimeToSeconds = (vttTime: string): number => {
 };
 
 export const generateNarration = async (
-  text: string, 
+  text: string,
   fileName: string,
   outputDir: string = 'temp_assets'
 ): Promise<NarrationResult> => {
@@ -32,14 +32,14 @@ export const generateNarration = async (
 
   const audioPath = path.join(outputDir, `${fileName}.mp3`);
   const vttPath = path.join(outputDir, `${fileName}.vtt`);
-  const voice = 'pt-BR-AntonioNeural';
+  const voice = 'pt-BR-ThalitaMultilingualNeural';
 
   console.log(`🗣️ Invocando edge-tts (Python) para: ${fileName}...`);
 
   try {
     // Escapa aspas no texto para o shell
     const escapedText = text.replace(/"/g, '\\"');
-    
+
     // Comando edge-tts do Python com flags de áudio e legendas (vtt)
     // Usando python -m edge_tts para garantir que o executável seja encontrado
     const command = `python -m edge_tts --voice ${voice} --text "${escapedText}" --write-media ${audioPath} --write-subtitles ${vttPath}`;
@@ -48,7 +48,7 @@ export const generateNarration = async (
     // Parse do arquivo VTT para extrair os word timestamps
     const vttContent = fs.readFileSync(vttPath, 'utf8');
     const wordTimestamps: WordTimestamp[] = [];
-    
+
     // Regex para capturar os blocos de tempo e texto do VTT
     // Ex: 00:00:00.000 --> 00:00:00.400\nTexto
     const lines = vttContent.split('\n');

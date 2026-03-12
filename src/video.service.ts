@@ -1,4 +1,4 @@
-import { execSync } from 'child_process';
+import { execSync, spawnSync } from 'child_process';
 import fs from 'fs';
 import path from 'path';
 import type { Quiz } from './content.service';
@@ -25,105 +25,134 @@ export const assembleVideo = async (
   audioData: { qPath: string; aPath: string; qWords: WordTimestamp[]; aWords: WordTimestamp[] },
   outputPath: string = 'final_short.mp4'
 ): Promise<string> => {
-  const tempDir = 'temp_assets';
+  const tempDir = path.resolve('temp_assets');
   if (!fs.existsSync(tempDir)) fs.mkdirSync(tempDir);
 
-  console.log(`🎬 Processando vídeo...`);
+  console.log(`🎬 Montando vídeo completo...`);
 
   try {
-    // Determine a duração do áudio da pergunta
-    const qDurStr = execSync(`ffprobe -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 "${audioData.qPath}"`).toString().trim();
-    const qDur = parseFloat(qDurStr);
+    const normalizePath = (p: string) => path.resolve(p).replace(/\\/g, '/');
+    const rel = (p: string) => path.relative(process.cwd(), p).replace(/\\/g, '/');
+    const esc = (p: string) => rel(p).replace(/([:])/g, '\\$1');
 
-    const bgFiles = fs.existsSync('assets/backgrounds') ? fs.readdirSync('assets/backgrounds') : [];
-    let bgVideo: string = bgFiles.length > 0 ? path.join('assets/backgrounds', bgFiles[0]) : '';
-
-    if (!bgVideo) {
-      console.log('⚠️ Nenhum fundo encontrado. Gerando fundo preto em imagem...');
-      bgVideo = path.join(tempDir, 'bg_black.jpg');
-      execSync(`ffmpeg -y -f lavfi -i color=c=black:s=1080x1920:d=1 -frames:v 1 ${bgVideo}`);
+    const fontFile = 'assets/fonts/arialbd.ttf';
+    if (!fs.existsSync(fontFile)) {
+        fs.mkdirSync('assets/fonts', { recursive: true });
+        try {
+            fs.copyFileSync('C:/Windows/Fonts/arialbd.ttf', fontFile);
+        } catch (e) {
+            console.warn('⚠️ Não foi possível copiar a fonte automaticamente, tentando via shell...');
+            execSync(`cmd /c copy C:\\Windows\\Fonts\\arialbd.ttf assets\\fonts\\arialbd.ttf`);
+        }
     }
 
-    // Preparar arquivos de texto para o ffmpeg drawtext não sofrer com escape
+    const qPath = normalizePath(audioData.qPath);
+    const aPath = normalizePath(audioData.aPath);
+    const qDur = parseFloat(execSync(`ffprobe -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 "${qPath}"`).toString().trim());
+
+    const musicPath = normalizePath('assets/music/background.mp3');
+    const beepPath = normalizePath('assets/music/beep.mp3');
+    const hasMusic = fs.existsSync(musicPath);
+    const hasBeep = fs.existsSync(beepPath);
+
+    const bgFiles = fs.existsSync('assets/backgrounds') ? fs.readdirSync('assets/backgrounds').filter(f => f.endsWith('.png') || f.endsWith('.jpg')) : [];
+    const bgSelected = bgFiles.length > 0 ? bgFiles[Math.floor(Math.random() * bgFiles.length)] : undefined;
+    let bgVideo = bgSelected ? path.resolve('assets/backgrounds', bgSelected) : '';
+    
+    if (!bgVideo) {
+      bgVideo = path.join(tempDir, 'bg_black.jpg');
+      if (!fs.existsSync(bgVideo)) {
+        execSync(`ffmpeg -y -f lavfi -i color=c=black:s=1080x1920:d=1 -frames:v 1 "${normalizePath(bgVideo)}"`);
+      }
+    }
+
     const qTxtPath = path.join(tempDir, 'q.txt');
     fs.writeFileSync(qTxtPath, wrapText(quiz.pergunta, 35));
 
     const optTxtPaths: Record<string, string> = {};
     for (const opt of ['A', 'B', 'C', 'D']) {
       const p = path.join(tempDir, `opt${opt}.txt`);
-      // @ts-ignore - indexing is safe here
-      fs.writeFileSync(p, wrapText(`${opt}) ${quiz.opcoes[opt]}`, 40));
+      fs.writeFileSync(p, wrapText(`${opt}) ${quiz.opcoes[opt as keyof typeof quiz.opcoes]}`, 40));
       optTxtPaths[opt] = p;
     }
 
-    const normalizePath = (p: string) => p.replace(/\\/g, '/');
-    const escapeFilterPath = (p: string) => normalizePath(p).replace(/([:\\])/g, '\\$1');
-
-    const fontFile = escapeFilterPath(process.platform === 'win32' 
-      ? 'C:/Windows/Fonts/arialbd.ttf' 
-      : '/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf');
-
     const filters: string[] = [];
-
-    // 1. Áudio: padding de 5 segs na pergunta, depois concatena com a resposta
-    filters.push(`[1:a]apad=pad_dur=5[q_padded]; [q_padded][2:a]concat=n=2:v=0:a=1[aout]`);
-
-    // 2. Vídeo: scale, crop
     filters.push(`[0:v]scale=1080:1920:force_original_aspect_ratio=increase,crop=1080:1920[v0]`);
 
-    let vCurrent = 'v0';
-    let vIdx = 1;
+    let vC = 'v0';
+    let vI = 1;
 
-    // Pergunta
-    filters.push(`[${vCurrent}]drawtext=textfile='${escapeFilterPath(qTxtPath)}':fontfile='${fontFile}':fontcolor=white:fontsize=60:x=(w-text_w)/2:y=300:bordercolor=black:borderw=4[v${vIdx}]`);
-    vCurrent = `v${vIdx++}`;
+    // Filters de Vídeo
+    filters.push(`[${vC}]drawtext=textfile='${esc(qTxtPath)}':fontfile='${fontFile}':fontcolor=white:fontsize=60:x=(w-text_w)/2:y=300:bordercolor=black:borderw=4[v${vI}]`);
+    vC = `v${vI++}`;
 
-    // Opções
     const optY: Record<string, number> = { A: 700, B: 850, C: 1000, D: 1150 };
     for (const opt of ['A', 'B', 'C', 'D']) {
-      filters.push(`[${vCurrent}]drawtext=textfile='${escapeFilterPath(optTxtPaths[opt])}':fontfile='${fontFile}':fontcolor=white:fontsize=50:x=100:y=${optY[opt]}:bordercolor=black:borderw=3[v${vIdx}]`);
-      vCurrent = `v${vIdx++}`;
+      if (optTxtPaths[opt]) {
+        filters.push(`[${vC}]drawtext=textfile='${esc(optTxtPaths[opt])}':fontfile='${fontFile}':fontcolor=white:fontsize=50:x=100:y=${optY[opt]}:bordercolor=black:borderw=3[v${vI}]`);
+        vC = `v${vI++}`;
+      }
     }
 
-    // Timer (5 a 1)
     for (let i = 0; i < 5; i++) {
-      filters.push(`[${vCurrent}]drawtext=text='${5 - i}':fontfile='${fontFile}':fontcolor=yellow:fontsize=150:x=(w-text_w)/2:y=1400:bordercolor=black:borderw=5:enable='between(t,${qDur + i},${qDur + i + 1})'[v${vIdx}]`);
-      vCurrent = `v${vIdx++}`;
+        filters.push(`[${vC}]drawtext=text='${5 - i}':fontfile='${fontFile}':fontcolor=yellow:fontsize=150:x=(w-text_w)/2:y=1400:bordercolor=black:borderw=5:enable='between(t,${qDur + i},${qDur + i + 1})'[v${vI}]`);
+        vC = `v${vI++}`;
     }
 
-    // Highlight resposta correta (muda cor para verde no momento que a resposta é falada)
-    const correctOpt = quiz.resposta_correta as string;
-    filters.push(`[${vCurrent}]drawtext=textfile='${escapeFilterPath(optTxtPaths[correctOpt])}':fontfile='${fontFile}':fontcolor=green:fontsize=50:x=100:y=${optY[correctOpt]}:bordercolor=black:borderw=3:enable='gte(t,${qDur + 5})'[vout]`);
-
-    const filterGraph = filters.join('; ');
-    const filterScriptPath = path.join(tempDir, 'filter.txt');
-    fs.writeFileSync(filterScriptPath, filterGraph);
-
-    // O fundo pode ser imagem ou vídeo. Se for imagem, precisa do -loop 1
-    const isImage = bgVideo.endsWith('.jpg') || bgVideo.endsWith('.png');
-    const bgInputArgs = isImage ? `-loop 1 -framerate 30 -i "${bgVideo}"` : `-i "${bgVideo}"`;
-
-    const mixCmd = `ffmpeg -y ${bgInputArgs} -i "${audioData.qPath}" -i "${audioData.aPath}" -filter_complex_script "${filterScriptPath}" -map "[vout]" -map "[aout]" -c:v libx264 -c:a aac -pix_fmt yuv420p -shortest "${outputPath}"`;
-
-    console.log(`🎥 Executando FFmpeg: ${mixCmd}`);
-    try {
-      execSync(mixCmd, { stdio: 'pipe' });
-    } catch (err: any) {
-      console.error('FFmpeg Execution Failed:', err.message);
-      if (err.stderr) console.error(err.stderr.toString());
-      throw err;
+    const correct = quiz.resposta_correta as keyof typeof optTxtPaths;
+    if (optTxtPaths[correct]) {
+        filters.push(`[${vC}]drawtext=textfile='${esc(optTxtPaths[correct])}':fontfile='${fontFile}':fontcolor=green:fontsize=50:x=100:y=${optY[correct]}:bordercolor=black:borderw=3:enable='gte(t,${qDur + 5})'[vout]`);
+    } else {
+        filters.push(`[${vC}]copy[vout]`);
     }
 
-    console.log(`✅ Vídeo gerado com sucesso em: ${outputPath}`);
+    // Filters de Áudio
+    let curA = '[1:a]apad=pad_dur=5[qp]';
+    let lastA = '[qp]';
+    let inI = 3;
+
+    if (hasBeep) {
+        for (let i = 0; i < 5; i++) {
+            const d = Math.round((qDur + i) * 1000);
+            curA += `;[${inI}:a]adelay=${d}|${d}[b${i}];${lastA}[b${i}]amix=inputs=2:dropout_transition=0:normalize=0[m${i}]`;
+            lastA = `[m${i}]`;
+        }
+        inI++;
+    }
+
+    curA += `;${lastA}[qr];[qr][2:a]concat=n=2:v=0:a=1[base]`;
+    
+    if (hasMusic) {
+        curA += `;[${inI}:a]aloop=loop=-1:size=2e9,volume=0.1[bgm];[base][bgm]amix=inputs=2:duration=shortest[aout]`;
+    } else {
+        curA += `;[base]volume=1.0[aout]`;
+    }
+    filters.push(curA);
+
+    const isImg = bgVideo.toLowerCase().match(/\.(jpg|png)$/);
+    const args = [
+        '-y', ...(isImg ? ['-loop', '1', '-framerate', '30'] : []),
+        '-i', normalizePath(bgVideo), '-i', qPath, '-i', aPath
+    ];
+    if (hasBeep) args.push('-i', normalizePath(beepPath));
+    if (hasMusic) args.push('-i', normalizePath(musicPath));
+    args.push('-filter_complex', filters.join(';'), '-map', '[vout]', '-map', '[aout]');
+    args.push('-c:v', 'libx264', '-c:a', 'aac', '-pix_fmt', 'yuv420p', '-shortest', normalizePath(outputPath));
+
+    console.log(`🎥 Processando FFmpeg... (Fundo: ${bgSelected || 'Padrão'})`);
+    const res = spawnSync('ffmpeg', args, { stdio: 'pipe' });
+
+    if (res.status !== 0) {
+        const errLog = res.stderr?.toString() || 'Unknown FFmpeg Error';
+        console.error('❌ Erro FFmpeg Detalhado:', errLog);
+        fs.writeFileSync(path.join(tempDir, 'ffmpeg_error.log'), errLog);
+        throw new Error(`FFmpeg falhou com status ${res.status}`);
+    }
+
+    console.log(`✅ Vídeo gerado com sucesso: ${outputPath}`);
     return outputPath;
-  } catch (error: any) {
-    console.error('❌ Erro na montagem do vídeo:', error.message);
-    if (error.stderr) {
-      console.error('FFmpeg Standard Error:', error.stderr.toString());
-    }
-    if (error.stdout) {
-      console.error('FFmpeg Standard Output:', error.stdout.toString());
-    }
-    throw new Error('Falha na geração do vídeo.');
+  } catch (err: any) {
+    console.error('❌ Erro na montagem do vídeo:', err.message);
+    throw err;
   }
 };
