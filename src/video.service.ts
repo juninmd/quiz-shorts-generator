@@ -52,8 +52,10 @@ export const assembleVideo = async (
 
     const musicPath = normalizePath('assets/music/background.mp3');
     const beepPath = normalizePath('assets/music/beep.mp3');
+    const logoPath = normalizePath('assets/logo/logo.png');
     const hasMusic = fs.existsSync(musicPath);
     const hasBeep = fs.existsSync(beepPath);
+    const hasLogo = fs.existsSync(logoPath);
 
     const bgFiles = fs.existsSync('assets/backgrounds') ? fs.readdirSync('assets/backgrounds').filter(f => f.endsWith('.png') || f.endsWith('.jpg')) : [];
     const bgSelected = bgFiles.length > 0 ? bgFiles[Math.floor(Math.random() * bgFiles.length)] : undefined;
@@ -76,11 +78,52 @@ export const assembleVideo = async (
       optTxtPaths[opt] = p;
     }
 
-    const filters: string[] = [];
-    filters.push(`[0:v]scale=1080:1920:force_original_aspect_ratio=increase,crop=1080:1920[v0]`);
+    const isImg = bgVideo.toLowerCase().match(/\.(jpg|png)$/);
+    const ffmpegInputs: string[] = [];
+    
+    // 0: Background
+    if (isImg) {
+      ffmpegInputs.push('-loop', '1', '-framerate', '30', '-i', normalizePath(bgVideo));
+    } else {
+      ffmpegInputs.push('-stream_loop', '-1', '-i', normalizePath(bgVideo));
+    }
 
-    let vC = 'v0';
+    // 1: Question Audio, 2: Answer Audio
+    ffmpegInputs.push('-i', qPath, '-i', aPath);
+
+    let nextInputIdx = 3;
+    let beepIdx = -1;
+    let musicIdx = -1;
+    let logoIdx = -1;
+
+    if (hasBeep) {
+      ffmpegInputs.push('-i', normalizePath(beepPath));
+      beepIdx = nextInputIdx++;
+    }
+    if (hasMusic) {
+      ffmpegInputs.push('-i', normalizePath(musicPath));
+      musicIdx = nextInputIdx++;
+    }
+    if (hasLogo) {
+      ffmpegInputs.push('-i', normalizePath(logoPath));
+      logoIdx = nextInputIdx++;
+    }
+
+    const filters: string[] = [];
+    filters.push(`[0:v]scale=1080:1920:force_original_aspect_ratio=increase,crop=1080:1920[vbg]`);
+
+    let vC = 'vbg';
     let vI = 1;
+
+    // Overlay Logo
+    if (hasLogo && logoIdx !== -1) {
+      filters.push(`[${logoIdx}:v]scale=150:-1[logo_scaled]`);
+      filters.push(`[${vC}][logo_scaled]overlay=40:40[vlogo]`);
+      vC = 'vlogo';
+      // Canal Text
+      filters.push(`[${vC}]drawtext=text='@akitemquiz':fontfile='${fontFile}':fontcolor=white:fontsize=35:x=200:y=100:bordercolor=black:borderw=2[vcanal]`);
+      vC = 'vcanal';
+    }
 
     // Filters de Vídeo
     // Question: Higher (y=380) and narrower (maxLen=30)
@@ -119,24 +162,22 @@ export const assembleVideo = async (
     let audioFilters: string[] = [];
     audioFilters.push(`[1:a]apad=pad_dur=6[qp]`);
     let lastAudioLabel = '[qp]';
-    let inI = 3;
 
-    if (hasBeep) {
+    if (hasBeep && beepIdx !== -1) {
       for (let i = 0; i < 6; i++) {
         const d = Math.round((qDur + i) * 1000);
         const beepLabel = `b${i}`;
         const mixedLabel = `m${i}`;
-        audioFilters.push(`[${inI}:a]adelay=${d}|${d}[${beepLabel}]`);
+        audioFilters.push(`[${beepIdx}:a]adelay=${d}|${d}[${beepLabel}]`);
         audioFilters.push(`${lastAudioLabel}[${beepLabel}]amix=inputs=2:dropout_transition=0:normalize=0[${mixedLabel}]`);
         lastAudioLabel = `[${mixedLabel}]`;
       }
-      inI++;
     }
 
     audioFilters.push(`${lastAudioLabel}[2:a]concat=n=2:v=0:a=1[base]`);
 
-    if (hasMusic) {
-      audioFilters.push(`[${inI}:a]aloop=loop=-1:size=2e9,volume=0.1[bgm]`);
+    if (hasMusic && musicIdx !== -1) {
+      audioFilters.push(`[${musicIdx}:a]aloop=loop=-1:size=2e9,volume=0.1[bgm]`);
       audioFilters.push(`[base][bgm]amix=inputs=2:duration=shortest[aout]`);
     } else {
       audioFilters.push(`[base]volume=1.0[aout]`);
@@ -144,20 +185,7 @@ export const assembleVideo = async (
     filters.push(audioFilters.join(';'));
 
 
-    const isImg = bgVideo.toLowerCase().match(/\.(jpg|png)$/);
-    const args = ['-y'];
-
-    if (isImg) {
-      args.push('-loop', '1', '-framerate', '30', '-i', normalizePath(bgVideo));
-    } else {
-      // Se for vídeo, fazemos loop infinito para garantir que cubra todo o áudio
-      args.push('-stream_loop', '-1', '-i', normalizePath(bgVideo));
-    }
-
-    args.push('-i', qPath, '-i', aPath);
-    if (hasBeep) args.push('-i', normalizePath(beepPath));
-    if (hasMusic) args.push('-i', normalizePath(musicPath));
-
+    const args = ['-y', ...ffmpegInputs];
     args.push('-filter_complex', filters.join(';'), '-map', '[vout]', '-map', '[aout]');
     args.push('-c:v', 'libx264', '-c:a', 'aac', '-pix_fmt', 'yuv420p', '-shortest', normalizePath(outputPath));
 

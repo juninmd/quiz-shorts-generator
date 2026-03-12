@@ -61,10 +61,18 @@ export const generateQuiz = async (): Promise<Quiz> => {
 
     const quizData = JSON.parse(cleanContent);
     
+    // Se o tema vier faltando ou vazio (erro comum de modelos menores), preenchemos com o topic selecionado
+    if (!quizData.tema) {
+      quizData.tema = topic;
+    }
+
     // Valida com Zod
     return quizSchema.parse(quizData);
   } catch (error: any) {
-    console.error('❌ Erro na biblioteca Ollama:', error.message || error);
+    console.error('❌ Erro no processamento do conteúdo Ollama:', error.message || error);
+    if (error.name === 'ZodError') {
+      console.error('Detalhamento da validação:', JSON.stringify(error.errors, null, 2));
+    }
     throw new Error('Falha na geração de conteúdo via Ollama.');
   }
 };
