@@ -2,31 +2,34 @@ import { describe, it, expect, vi } from 'vitest';
 import { generateQuiz } from '../content.service';
 
 // Mock do Ollama chat
-vi.mock('ollama', () => ({
-  default: {
-    chat: vi.fn().mockResolvedValue({
-      message: {
-        content: JSON.stringify({
-          tema: 'jogos',
-          pergunta: 'Quem é o protagonista de The Legend of Zelda?',
-          opcoes: {
-            A: 'Zelda',
-            B: 'Link',
-            C: 'Ganon',
-            D: 'Epona'
-          },
-          resposta_correta: 'B',
-          fato_curioso: 'Embora o jogo se chame Zelda, o protagonista é o Link.'
-        })
-      }
-    })
-  }
-}));
+vi.mock('ollama', () => {
+  // simulate a class with a chat method
+  const chatMock = vi.fn().mockResolvedValue({
+    message: {
+      content: JSON.stringify({
+        tema: 'jogos',
+        pergunta: 'Quem é o protagonista de The Legend of Zelda?',
+        opcoes: {
+          A: 'Zelda',
+          B: 'Link',
+          C: 'Ganon',
+          D: 'Epona'
+        },
+        resposta_correta: 'B',
+        fato_curioso: 'Embora o jogo se chame Zelda, o protagonista é o Link.'
+      })
+    }
+  });
+
+  return {
+    Ollama: vi.fn().mockImplementation(() => ({ chat: chatMock }))
+  };
+});
 
 describe('ContentService', () => {
   it('deve gerar um quiz com a estrutura correta', async () => {
     const quiz = await generateQuiz();
-    
+
     expect(quiz).toHaveProperty('tema');
     expect(quiz).toHaveProperty('pergunta');
     expect(quiz.opcoes).toHaveProperty('A');

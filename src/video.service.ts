@@ -1,4 +1,4 @@
-import { execSync, spawnSync } from 'child_process';
+import { execSync, spawnSync, spawn } from 'child_process';
 import fs from 'fs';
 import path from 'path';
 import type { Quiz } from './content.service';
@@ -80,7 +80,7 @@ export const assembleVideo = async (
 
     const isImg = bgVideo.toLowerCase().match(/\.(jpg|png)$/);
     const ffmpegInputs: string[] = [];
-    
+
     // 0: Background
     if (isImg) {
       ffmpegInputs.push('-loop', '1', '-framerate', '30', '-i', normalizePath(bgVideo));
@@ -133,7 +133,7 @@ export const assembleVideo = async (
     const optY: Record<string, number> = { A: 870, B: 1120, C: 1370, D: 1620 };
     const correct = quiz.resposta_correta as 'A' | 'B' | 'C' | 'D';
     const revealTime = qDur + 6;
-    
+
     for (const opt of ['A', 'B', 'C', 'D'] as const) {
       if (optTxtPaths[opt]) {
         if (opt === correct) {
@@ -185,19 +185,56 @@ export const assembleVideo = async (
     filters.push(audioFilters.join(';'));
 
 
-    const args = ['-y', ...ffmpegInputs];
+    // hide the huge ffmpeg banner to reduce noise
+    const args = ['-y', '-hide_banner', ...ffmpegInputs];
     args.push('-filter_complex', filters.join(';'), '-map', '[vout]', '-map', '[aout]');
     args.push('-c:v', 'libx264', '-c:a', 'aac', '-pix_fmt', 'yuv420p', '-shortest', normalizePath(outputPath));
 
-    console.log(`🎥 Processando FFmpeg... (Fundo: ${bgSelected || 'Padrão'})`);
-    const res = spawnSync('ffmpeg', args, { stdio: 'pipe' });
+    // approximate length: question duration + 6s reveal + 6s countdown
+    const totalSeconds = qDur + 12;
 
-    if (res.status !== 0) {
-      const errLog = res.stderr?.toString() || 'Unknown FFmpeg Error';
-      console.error('❌ Erro FFmpeg Detalhado:', errLog);
-      fs.writeFileSync(path.join(tempDir, 'ffmpeg_error.log'), errLog);
-      throw new Error(`FFmpeg falhou com status ${res.status}`);
-    }
+    console.log(`🎥 Processando FFmpeg... (Fundo: ${bgSelected || 'Padrão'})`);
+
+    // helper to convert hh:mm:ss.ms -> seconds
+    const hmsToSeconds = (hms: string): number => {
+      const parts = hms.split(':').map(parseFloat);
+      if (parts.length === 3) {
+        return parts[0]! * 3600 + parts[1]! * 60 + parts[2]!;
+      }
+      return 0;
+    };
+
+    await new Promise<void>((resolve, reject) => {
+      const ff = spawn('ffmpeg', args);
+
+      ff.stderr.on('data', (chunk: Buffer | string) => {
+        const str = chunk.toString();
+        // split into lines to filter
+        for (const rawLine of str.split(/\r?\n/)) {
+          const line = rawLine.trim();
+          if (!line) continue;
+
+          // log only metadata/info lines
+          if (/^(Input #|Duration:|Stream #|Metadata:)/.test(line)) {
+            console.log(line);
+          }
+
+          // progress tracking
+          const m = line.match(/time=(\d+:\d+:\d+\.\d+)/);
+          if (m && m[1]) {
+            const secs = hmsToSeconds(m[1]);
+            const pct = Math.min(100, Math.round((secs / totalSeconds) * 100));
+            process.stdout.write(`\r⏳ ${pct}%`);
+          }
+        }
+      });
+
+      ff.on('close', (code: number | null) => {
+        process.stdout.write('\n');
+        if (code === 0) resolve();
+        else reject(new Error(`FFmpeg exited with ${code}`));
+      });
+    });
 
     console.log(`✅ Vídeo gerado com sucesso: ${outputPath}`);
     return outputPath;
