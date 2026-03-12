@@ -2,7 +2,7 @@ name: Daily Quiz Shorts Generator (Node.js/TS + Python)
 
 on:
   schedule:
-    - cron: '0 9 * * *' # Roda todos os dias às 09:00 UTC (06:00 Brasília)
+    - cron: '0 */1 * * *' # Altere para rodar a cada 1 hora
   workflow_dispatch: # Permite rodar manualmente para testar
 
 jobs:
@@ -61,4 +61,4 @@ jobs:
       with:
         name: generated-quiz-video
         path: quiz_*.mp4
-        retention-days: 7
+        retention-days: 1
