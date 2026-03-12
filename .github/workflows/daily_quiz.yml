@@ -11,6 +11,7 @@ jobs:
     env:
       FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
       OLLAMA_MODELS_DIR: /home/runner/.ollama/models
+      OLLAMA_MODEL: qwen3:1.7b # Definido globalmente para consistência do cache
 
     steps:
     - name: Checkout Repository
@@ -20,6 +21,7 @@ jobs:
       uses: actions/setup-python@v5
       with:
         python-version: '3.11'
+        cache: 'pip'
 
     - name: Install Python Dependencies
       run: |
@@ -29,8 +31,11 @@ jobs:
     - name: Install System Dependencies
       run: |
         sudo apt-get update
-        sudo apt-get install -y ffmpeg libass-dev ttf-mscorefonts-installer
+        sudo apt-get install -y libass-dev # ffmpeg já é pré-instalado
         sudo fc-cache -f -v
+
+    - name: Verify FFmpeg
+      run: ffmpeg -version
 
     - name: Install pnpm
       uses: pnpm/action-setup@v4
@@ -48,7 +53,7 @@ jobs:
       uses: actions/cache@v4
       with:
         path: /home/runner/.ollama/models
-        key: ollama-models-${{ env.OLLAMA_MODEL || 'qwen3-1.7b' }}
+        key: ollama-models-${{ env.OLLAMA_MODEL }}
 
     - name: Setup Ollama
       run: |
@@ -56,7 +61,7 @@ jobs:
         ollama serve &
         sleep 10
         if [ "${{ steps.cache-ollama.outputs.cache-hit }}" != 'true' ]; then
-          ollama pull qwen3:1.7b
+          ollama pull ${{ env.OLLAMA_MODEL }}
         fi
         ollama list
 
