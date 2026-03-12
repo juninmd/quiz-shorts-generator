@@ -67,7 +67,7 @@ export const assembleVideo = async (
     }
 
     const qTxtPath = path.join(tempDir, 'q.txt');
-    fs.writeFileSync(qTxtPath, wrapText(quiz.pergunta, 35));
+    fs.writeFileSync(qTxtPath, wrapText(quiz.pergunta, 30));
 
     const optTxtPaths: Record<string, string> = {};
     for (const opt of ['A', 'B', 'C', 'D']) {
@@ -83,23 +83,33 @@ export const assembleVideo = async (
     let vI = 1;
 
     // Filters de Vídeo
-    filters.push(`[${vC}]drawtext=textfile='${esc(qTxtPath)}':fontfile='${fontFile}':fontcolor=white:fontsize=60:x=(w-text_w)/2:y=300:bordercolor=black:borderw=4[v${vI}]`);
+    // Question: Higher (y=380) and narrower (maxLen=30)
+    filters.push(`[${vC}]drawtext=textfile='${esc(qTxtPath)}':fontfile='${fontFile}':fontcolor=white:fontsize=55:x=(w-text_w)/2:y=380:bordercolor=black:borderw=4:line_spacing=10[v${vI}]`);
     vC = `v${vI++}`;
 
-    const optY: Record<string, number> = { A: 700, B: 850, C: 1000, D: 1150 };
+    const optY: Record<string, number> = { A: 870, B: 1120, C: 1370, D: 1620 };
     const correct = quiz.resposta_correta as 'A' | 'B' | 'C' | 'D';
+    const revealTime = qDur + 5;
+    
     for (const opt of ['A', 'B', 'C', 'D'] as const) {
       if (optTxtPaths[opt]) {
-        const colorKey = opt === correct ? 'fontcolor_expr' : 'fontcolor';
-        const colorVal = opt === correct ? `'if(gte(t,${qDur + 5}),green,white)'` : 'white';
-        // Ajustado para centralizar as opções (x=(w-text_w)/2) para combinar com os novos templates
-        filters.push(`[${vC}]drawtext=textfile='${esc(optTxtPaths[opt])}':fontfile='${fontFile}':${colorKey}=${colorVal}:fontsize=50:x=(w-text_w)/2:y=${optY[opt]}:bordercolor=black:borderw=3[v${vI}]`);
-        vC = `v${vI++}`;
+        if (opt === correct) {
+          // Render white until reveal
+          filters.push(`[${vC}]drawtext=textfile='${esc(optTxtPaths[opt])}':fontfile='${fontFile}':fontcolor=white:fontsize=48:x=(w-text_w)/2:y=${optY[opt]}:bordercolor=black:borderw=3:enable='lt(t,${revealTime})'[v${vI}]`);
+          vC = `v${vI++}`;
+          // Render green after reveal
+          filters.push(`[${vC}]drawtext=textfile='${esc(optTxtPaths[opt])}':fontfile='${fontFile}':fontcolor=green:fontsize=48:x=(w-text_w)/2:y=${optY[opt]}:bordercolor=black:borderw=3:enable='gte(t,${revealTime})'[v${vI}]`);
+          vC = `v${vI++}`;
+        } else {
+          // Normal white option
+          filters.push(`[${vC}]drawtext=textfile='${esc(optTxtPaths[opt])}':fontfile='${fontFile}':fontcolor=white:fontsize=48:x=(w-text_w)/2:y=${optY[opt]}:bordercolor=black:borderw=3[v${vI}]`);
+          vC = `v${vI++}`;
+        }
       }
     }
 
     for (let i = 0; i < 5; i++) {
-      filters.push(`[${vC}]drawtext=text='${5 - i}':fontfile='${fontFile}':fontcolor=yellow:fontsize=150:x=(w-text_w)/2:y=1400:bordercolor=black:borderw=5:enable='between(t,${qDur + i},${qDur + i + 1})'[v${vI}]`);
+      filters.push(`[${vC}]drawtext=text='${5 - i}':fontfile='${fontFile}':fontcolor=yellow:fontsize=150:x=(w-text_w)/2:y=1800:bordercolor=black:borderw=5:enable='between(t,${qDur + i},${qDur + i + 1})'[v${vI}]`);
       vC = `v${vI++}`;
     }
 
