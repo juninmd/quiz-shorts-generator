@@ -27,8 +27,10 @@ export const sendVideoToTelegram = async (
     });
     console.log('✅ Vídeo enviado com sucesso!');
     return true;
-  } catch (error) {
-    console.error('❌ Erro ao enviar para o Telegram:', error);
+  } catch (error: any) {
+    // Mascara o token em qualquer string de erro para segurança
+    const errorMessage = (error.message || String(error)).replace(token, '***TOKEN_OCULTO***');
+    console.error('❌ Erro ao enviar para o Telegram:', errorMessage);
     return false;
   }
 };
