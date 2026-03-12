@@ -37,13 +37,13 @@ export const assembleVideo = async (
 
     const fontFile = 'assets/fonts/arialbd.ttf';
     if (!fs.existsSync(fontFile)) {
-        fs.mkdirSync('assets/fonts', { recursive: true });
-        try {
-            fs.copyFileSync('C:/Windows/Fonts/arialbd.ttf', fontFile);
-        } catch (e) {
-            console.warn('⚠️ Não foi possível copiar a fonte automaticamente, tentando via shell...');
-            execSync(`cmd /c copy C:\\Windows\\Fonts\\arialbd.ttf assets\\fonts\\arialbd.ttf`);
-        }
+      fs.mkdirSync('assets/fonts', { recursive: true });
+      try {
+        fs.copyFileSync('C:/Windows/Fonts/arialbd.ttf', fontFile);
+      } catch (e) {
+        console.warn('⚠️ Não foi possível copiar a fonte automaticamente, tentando via shell...');
+        execSync(`cmd /c copy C:\\Windows\\Fonts\\arialbd.ttf assets\\fonts\\arialbd.ttf`);
+      }
     }
 
     const qPath = normalizePath(audioData.qPath);
@@ -58,7 +58,7 @@ export const assembleVideo = async (
     const bgFiles = fs.existsSync('assets/backgrounds') ? fs.readdirSync('assets/backgrounds').filter(f => f.endsWith('.png') || f.endsWith('.jpg')) : [];
     const bgSelected = bgFiles.length > 0 ? bgFiles[Math.floor(Math.random() * bgFiles.length)] : undefined;
     let bgVideo = bgSelected ? path.resolve('assets/backgrounds', bgSelected) : '';
-    
+
     if (!bgVideo) {
       bgVideo = path.join(tempDir, 'bg_black.jpg');
       if (!fs.existsSync(bgVideo)) {
@@ -95,15 +95,15 @@ export const assembleVideo = async (
     }
 
     for (let i = 0; i < 5; i++) {
-        filters.push(`[${vC}]drawtext=text='${5 - i}':fontfile='${fontFile}':fontcolor=yellow:fontsize=150:x=(w-text_w)/2:y=1400:bordercolor=black:borderw=5:enable='between(t,${qDur + i},${qDur + i + 1})'[v${vI}]`);
-        vC = `v${vI++}`;
+      filters.push(`[${vC}]drawtext=text='${5 - i}':fontfile='${fontFile}':fontcolor=yellow:fontsize=150:x=(w-text_w)/2:y=1400:bordercolor=black:borderw=5:enable='between(t,${qDur + i},${qDur + i + 1})'[v${vI}]`);
+      vC = `v${vI++}`;
     }
 
     const correct = quiz.resposta_correta as keyof typeof optTxtPaths;
     if (optTxtPaths[correct]) {
-        filters.push(`[${vC}]drawtext=textfile='${esc(optTxtPaths[correct])}':fontfile='${fontFile}':fontcolor=green:fontsize=50:x=100:y=${optY[correct]}:bordercolor=black:borderw=3:enable='gte(t,${qDur + 5})'[vout]`);
+      filters.push(`[${vC}]drawtext=textfile='${esc(optTxtPaths[correct])}':fontfile='${fontFile}':fontcolor=green:fontsize=50:x=100:y=${optY[correct]}:bordercolor=black:borderw=3:enable='gte(t,${qDur + 5})'[vout]`);
     } else {
-        filters.push(`[${vC}]copy[vout]`);
+      filters.push(`[${vC}]copy[vout]`);
     }
 
     // Filters de Áudio
@@ -112,27 +112,27 @@ export const assembleVideo = async (
     let inI = 3;
 
     if (hasBeep) {
-        for (let i = 0; i < 5; i++) {
-            const d = Math.round((qDur + i) * 1000);
-            curA += `;[${inI}:a]adelay=${d}|${d}[b${i}];${lastA}[b${i}]amix=inputs=2:dropout_transition=0:normalize=0[m${i}]`;
-            lastA = `[m${i}]`;
-        }
-        inI++;
+      for (let i = 0; i < 5; i++) {
+        const d = Math.round((qDur + i) * 1000);
+        curA += `;[${inI}:a]adelay=${d}|${d}[b${i}];${lastA}[b${i}]amix=inputs=2:dropout_transition=0:normalize=0[m${i}]`;
+        lastA = `[m${i}]`;
+      }
+      inI++;
     }
 
     curA += `;${lastA}[qr];[qr][2:a]concat=n=2:v=0:a=1[base]`;
-    
+
     if (hasMusic) {
-        curA += `;[${inI}:a]aloop=loop=-1:size=2e9,volume=0.1[bgm];[base][bgm]amix=inputs=2:duration=shortest[aout]`;
+      curA += `;[${inI}:a]aloop=loop=-1:size=2e9,volume=0.1[bgm];[base][bgm]amix=inputs=2:duration=shortest[aout]`;
     } else {
-        curA += `;[base]volume=1.0[aout]`;
+      curA += `;[base]volume=1.0[aout]`;
     }
     filters.push(curA);
 
     const isImg = bgVideo.toLowerCase().match(/\.(jpg|png)$/);
     const args = [
-        '-y', ...(isImg ? ['-loop', '1', '-framerate', '30'] : []),
-        '-i', normalizePath(bgVideo), '-i', qPath, '-i', aPath
+      '-y', ...(isImg ? ['-loop', '1', '-framerate', '30'] : []),
+      '-i', normalizePath(bgVideo), '-i', qPath, '-i', aPath
     ];
     if (hasBeep) args.push('-i', normalizePath(beepPath));
     if (hasMusic) args.push('-i', normalizePath(musicPath));
@@ -143,10 +143,10 @@ export const assembleVideo = async (
     const res = spawnSync('ffmpeg', args, { stdio: 'pipe' });
 
     if (res.status !== 0) {
-        const errLog = res.stderr?.toString() || 'Unknown FFmpeg Error';
-        console.error('❌ Erro FFmpeg Detalhado:', errLog);
-        fs.writeFileSync(path.join(tempDir, 'ffmpeg_error.log'), errLog);
-        throw new Error(`FFmpeg falhou com status ${res.status}`);
+      const errLog = res.stderr?.toString() || 'Unknown FFmpeg Error';
+      console.error('❌ Erro FFmpeg Detalhado:', errLog);
+      fs.writeFileSync(path.join(tempDir, 'ffmpeg_error.log'), errLog);
+      throw new Error(`FFmpeg falhou com status ${res.status}`);
     }
 
     console.log(`✅ Vídeo gerado com sucesso: ${outputPath}`);
