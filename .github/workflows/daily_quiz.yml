@@ -8,6 +8,7 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     env:
       FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
       OLLAMA_MODELS_DIR: /home/runner/.ollama/models
@@ -48,9 +49,9 @@ jobs:
         node-version: '24'
         cache: 'pnpm'
 
-    - name: Cache Ollama Models
+    - name: Restore Ollama Models Cache
       id: cache-ollama
-      uses: actions/cache@v4
+      uses: actions/cache/restore@v4
       with:
         path: /home/runner/.ollama/models
         key: ollama-models-${{ env.OLLAMA_MODEL }}
@@ -58,7 +59,8 @@ jobs:
     - name: Setup Ollama
       run: |
         curl -fsSL https://ollama.com/install.sh | sh
-        ollama serve &
+        ollama serve > /tmp/ollama.log 2>&1 &
+        echo $! > /tmp/ollama.pid
         sleep 10
         if [ "${{ steps.cache-ollama.outputs.cache-hit }}" != 'true' ]; then
           ollama pull ${{ env.OLLAMA_MODEL }}
@@ -79,6 +81,21 @@ jobs:
         OLLAMA_MODEL: ${{ secrets.OLLAMA_MODEL }}
       run: |
         pnpm start
+
+    - name: Stop Ollama
+      if: always()
+      run: |
+        if [ -f /tmp/ollama.pid ]; then
+          kill "$(cat /tmp/ollama.pid)" || true
+        fi
+        pkill -f "ollama serve" || true
+
+    - name: Save Ollama Models Cache
+      if: always() && steps.cache-ollama.outputs.cache-hit != 'true'
+      uses: actions/cache/save@v4
+      with:
+        path: /home/runner/.ollama/models
+        key: ollama-models-${{ env.OLLAMA_MODEL }}
 
     - name: Upload Video Artifact
       if: always()
