@@ -33,7 +33,7 @@ export const ensureFont = (): string => {
           fs.copyFileSync(src, fontFile);
           return true;
         }
-      } catch {}
+      } catch (e) { console.warn(`⚠️ Falha ao copiar a fonte de ${src}:`, e); }
       return false;
     };
 
@@ -44,7 +44,7 @@ export const ensureFont = (): string => {
         try {
           execSync(`cmd /c copy C:\\Windows\\Fonts\\arialbd.ttf assets\\fonts\\arialbd.ttf`);
           copied = true;
-        } catch {}
+        } catch (e) { console.warn('⚠️ O comando de cópia via shell falhou:', e); }
       }
     } else {
       copied = tryCopy('/usr/share/fonts/truetype/msttcorefonts/Arial_Bold.ttf');
@@ -74,7 +74,7 @@ export const prepareBackground = (tempDir: string): string => {
   if (!bgVideo) {
     bgVideo = path.join(tempDir, 'bg_default.jpg');
     if (!fs.existsSync(bgVideo)) {
-      execSync(`ffmpeg -y -f lavfi -i color=c=darkblue:s=1080x1920:d=1 -frames:v 1 "${normalizePath(bgVideo)}"`);
+      spawnSync('ffmpeg', ['-y', '-f', 'lavfi', '-i', 'color=c=darkblue:s=1080x1920:d=1', '-frames:v', '1', normalizePath(bgVideo)]);
     }
   }
   return bgVideo;
