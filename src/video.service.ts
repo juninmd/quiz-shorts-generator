@@ -21,8 +21,8 @@ export const assembleVideo = async (
     const fontFile = ensureFont();
     const qPath = normalizePath(audioData.qPath);
     const aPath = normalizePath(audioData.aPath);
-    const qDur = parseFloat(execSync(`ffprobe -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 "${qPath}"`).toString().trim());
-    const aDur = parseFloat(execSync(`ffprobe -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 "${aPath}"`).toString().trim());
+    const qDur = parseFloat(spawnSync('ffprobe', ['-v', 'error', '-show_entries', 'format=duration', '-of', 'default=noprint_wrappers=1:nokey=1', qPath]).stdout.toString().trim());
+    const aDur = parseFloat(spawnSync('ffprobe', ['-v', 'error', '-show_entries', 'format=duration', '-of', 'default=noprint_wrappers=1:nokey=1', aPath]).stdout.toString().trim());
 
     const totalSeconds = aDur + 5;
 
