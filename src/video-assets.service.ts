@@ -1,7 +1,7 @@
-import { execSync } from 'child_process';
+import { execSync, spawnSync } from 'child_process';
 import fs from 'fs';
 import path from 'path';
-import type { Quiz } from './content.service';
+import type { Quiz } from './content.service.js';
 
 export const wrapText = (text: string, maxLen: number): string => {
   const words = text.split(' ');
@@ -67,15 +67,23 @@ export const ensureFont = (): string => {
 };
 
 export const prepareBackground = (tempDir: string): string => {
-  const bgFiles = fs.existsSync('assets/backgrounds') ? fs.readdirSync('assets/backgrounds').filter(f => f.endsWith('.png') || f.endsWith('.jpg') || f.endsWith('.mp4')) : [];
-  const bgSelected = bgFiles.length > 0 ? bgFiles[Math.floor(Math.random() * bgFiles.length)] : undefined;
-  let bgVideo = bgSelected ? path.resolve('assets/backgrounds', bgSelected) : '';
+  // Adicione uma imagem padrão de background
+  if (!fs.existsSync('assets/backgrounds')) {
+    fs.mkdirSync('assets/backgrounds', { recursive: true });
+  }
 
-  if (!bgVideo) {
-    bgVideo = path.join(tempDir, 'bg_default.jpg');
-    if (!fs.existsSync(bgVideo)) {
-      spawnSync('ffmpeg', ['-y', '-f', 'lavfi', '-i', 'color=c=darkblue:s=1080x1920:d=1', '-frames:v', '1', normalizePath(bgVideo)]);
-    }
+  const defaultBgPath = path.resolve('assets/backgrounds/default.jpg');
+  if (!fs.existsSync(defaultBgPath)) {
+    // Generate standard default background
+    spawnSync('ffmpeg', ['-y', '-f', 'lavfi', '-i', 'color=c=blue:s=1080x1920:d=1', '-frames:v', '1', normalizePath(defaultBgPath)]);
+  }
+
+  const bgFiles = fs.readdirSync('assets/backgrounds').filter(f => f.endsWith('.png') || f.endsWith('.jpg') || f.endsWith('.mp4'));
+  const bgSelected = bgFiles.length > 0 ? bgFiles[Math.floor(Math.random() * bgFiles.length)] : 'default.jpg';
+  let bgVideo = path.resolve('assets/backgrounds', bgSelected!);
+
+  if (!fs.existsSync(bgVideo)) {
+    bgVideo = defaultBgPath;
   }
   return bgVideo;
 };

@@ -18,7 +18,7 @@ export interface NarrationResult {
  */
 const vttTimeToSeconds = (vttTime: string): number => {
   const [h, m, s] = vttTime.split(':');
-  return parseFloat(h) * 3600 + parseFloat(m) * 60 + parseFloat(s.replace(',', '.'));
+  return parseFloat(h!) * 3600 + parseFloat(m!) * 60 + parseFloat(s!.replace(',', '.'));
 };
 
 export const generateNarration = async (
@@ -53,13 +53,13 @@ export const generateNarration = async (
     // Ex: 00:00:00.000 --> 00:00:00.400\nTexto
     const lines = vttContent.split('\n');
     for (let i = 0; i < lines.length; i++) {
-      if (lines[i].includes('-->')) {
-        const [startStr, endStr] = lines[i].split(' --> ');
+      if (lines[i]!.includes('-->')) {
+        const [startStr, endStr] = lines[i]!.split(' --> ');
         const word = lines[i + 1]?.trim();
         if (word) {
           wordTimestamps.push({
-            start: vttTimeToSeconds(startStr),
-            end: vttTimeToSeconds(endStr),
+            start: vttTimeToSeconds(startStr!),
+            end: vttTimeToSeconds(endStr!),
             word: word
           });
         }

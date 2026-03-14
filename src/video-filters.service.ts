@@ -1,5 +1,5 @@
-import { esc, normalizePath } from './video-assets.service';
-import type { Quiz } from './content.service';
+import { esc, normalizePath } from './video-assets.service.js';
+import type { Quiz } from './content.service.js';
 
 export interface FilterResult {
   ffmpegInputs: string[];
@@ -65,9 +65,11 @@ export const generateFilters = (
     vC = 'vcanal';
   }
 
+  // A pergunta.
   filters.push(`[${vC}]drawtext=textfile='${esc(qTxtPath)}':fontfile='${fontFile}':fontcolor=white:fontsize=55:x=(w-text_w)/2:y=380:bordercolor=black:borderw=4:line_spacing=10[v${vI}]`);
   vC = `v${vI++}`;
 
+  // as alternativas em texto.
   const optY: Record<string, number> = { A: 870, B: 1120, C: 1370, D: 1620 };
   const correct = quiz.resposta_correta as 'A' | 'B' | 'C' | 'D';
   const revealTime = qDur + 5;
@@ -77,6 +79,7 @@ export const generateFilters = (
       if (opt === correct) {
         filters.push(`[${vC}]drawtext=textfile='${esc(optTxtPaths[opt])}':fontfile='${fontFile}':fontcolor=white:fontsize=48:x=(w-text_w)/2:y=${optY[opt]}:bordercolor=black:borderw=3:enable='lt(t,${revealTime})'[v${vI}]`);
         vC = `v${vI++}`;
+        // depois marque a resposta correta
         filters.push(`[${vC}]drawtext=textfile='${esc(optTxtPaths[opt])}':fontfile='${fontFile}':fontcolor=green:fontsize=48:x=(w-text_w)/2:y=${optY[opt]}:bordercolor=black:borderw=3:box=1:boxcolor=yellow@0.8:boxborderw=10:enable='gte(t,${revealTime})'[v${vI}]`);
         vC = `v${vI++}`;
       } else {
@@ -86,6 +89,7 @@ export const generateFilters = (
     }
   }
 
+  // E um timer de alguns segundos para quem assistir tente adivinhar
   for (let i = 0; i < 5; i++) {
     filters.push(`[${vC}]drawtext=text='${5 - i}':fontfile='${fontFile}':fontcolor=yellow:fontsize=150:x=(w-text_w)/2:y=1800:bordercolor=black:borderw=5:enable='between(t,${qDur + i},${qDur + i + 1})'[v${vI}]`);
     vC = `v${vI++}`;

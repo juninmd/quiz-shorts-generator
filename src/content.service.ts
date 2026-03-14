@@ -33,7 +33,7 @@ export const generateQuiz = async (): Promise<Quiz> => {
   const prompt = `Gere um quiz educativo sobre o tema: ${topic}. 
     Seja um verificador de fatos rigoroso. 
     Garanta precisão histórica/técnica e um fato curioso que valide a resposta. 
-    Os textos DEVEM ser extremamente curtos e diretos, pois o vídeo terá no máximo 1 minuto de duração padronizada (Shorts).
+    Os textos gerados pela llm devem ser curtos e diretos. O vídeo não pode ter mais de 1 minuto e deve ser padronizado.
     A pergunta deve ter no máximo 40 caracteres.
     As opções no máximo 15 caracteres cada.
     O fato curioso deve ter no máximo 60 caracteres.
