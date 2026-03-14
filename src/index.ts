@@ -1,8 +1,9 @@
 import 'dotenv/config';
-import { generateQuiz } from './content.service';
-import { generateNarration } from './tts.service';
-import { assembleVideo } from './video.service';
-import { sendVideoToTelegram } from './telegram.service';
+import { generateQuiz } from './content.service.js';
+import { generateNarration } from './tts.service.js';
+import { assembleVideo } from './video.service.js';
+import { sendVideoToTelegram } from './telegram.service.js';
+import { generateYoutubeMetadata, uploadToYouTube } from './youtube.service.js';
 import fs from 'fs';
 
 async function main() {
@@ -40,7 +41,12 @@ async function main() {
     const caption = `🏆 <b>NOVO QUIZ: ${quiz.tema.toUpperCase()}!</b>\n\nPerguntamos: ${quiz.pergunta}\n\n#quiz #shorts #gerado_ia`;
     const sent = await sendVideoToTelegram(outputFileName, caption);
 
-    // 5. Limpeza
+    // 5. YouTube Upload
+    console.log('🎥 Gerando metadados e enviando para o YouTube...');
+    const { title, description } = await generateYoutubeMetadata(quiz);
+    await uploadToYouTube(outputFileName, title, description);
+
+    // 6. Limpeza
     if (sent) {
       console.log('🧹 Limpando arquivos temporários...');
       if (fs.existsSync('temp_assets')) {
