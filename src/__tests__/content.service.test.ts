@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { generateQuiz } from '../content.service';
+import { generateQuiz } from '../content.service.js';
 
 // Mock do Ollama chat
 vi.mock('ollama', () => {
