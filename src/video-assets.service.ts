@@ -1,4 +1,4 @@
-import { execSync, spawnSync } from 'child_process';
+import { spawnSync } from 'child_process';
 import fs from 'fs';
 import crypto from 'crypto';
 import path from 'path';
@@ -43,7 +43,7 @@ export const ensureFont = (): string => {
       copied = tryCopy('C:/Windows/Fonts/arialbd.ttf');
       if (!copied) {
         try {
-          execSync(`cmd /c copy C:\\Windows\\Fonts\\arialbd.ttf assets\\fonts\\arialbd.ttf`);
+          spawnSync('cmd', ['/c', 'copy', 'C:\\Windows\\Fonts\\arialbd.ttf', 'assets\\fonts\\arialbd.ttf']);
           copied = true;
         } catch (e) { console.warn('⚠️ O comando de cópia via shell falhou:', e); }
       }

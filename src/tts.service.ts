@@ -1,4 +1,4 @@
-import { execSync } from 'child_process';
+import { spawnSync } from 'child_process';
 import fs from 'fs';
 import path from 'path';
 
@@ -37,13 +37,15 @@ export const generateNarration = async (
   console.log(`🗣️ Invocando edge-tts (Python) para: ${fileName}...`);
 
   try {
-    // Escapa aspas no texto para o shell
-    const escapedText = text.replace(/"/g, '\\"');
-
     // Comando edge-tts do Python com flags de áudio e legendas (vtt)
     // Usando python -m edge_tts para garantir que o executável seja encontrado
-    const command = `python -m edge_tts --voice ${voice} --text "${escapedText}" --write-media ${audioPath} --write-subtitles ${vttPath}`;
-    execSync(command);
+    spawnSync('python', [
+      '-m', 'edge_tts',
+      '--voice', voice,
+      '--text', text,
+      '--write-media', audioPath,
+      '--write-subtitles', vttPath
+    ], { stdio: 'inherit' });
 
     // Parse do arquivo VTT para extrair os word timestamps
     const vttContent = fs.readFileSync(vttPath, 'utf8');
