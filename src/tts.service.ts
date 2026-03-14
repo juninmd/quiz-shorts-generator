@@ -51,16 +51,16 @@ export const generateNarration = async (
     const vttContent = fs.readFileSync(vttPath, 'utf8');
     const wordTimestamps: WordTimestamp[] = [];
 
-    // Regex para capturar os blocos de tempo e texto do VTT
+    // Capturar os blocos de tempo e texto do VTT
     // Ex: 00:00:00.000 --> 00:00:00.400\nTexto
     const lines = vttContent.split('\n');
     for (let i = 0; i < lines.length; i++) {
       const line = lines[i];
-      if (line && line.includes('-->')) {
-        const parts = line.split(' --> ');
+      if (typeof line === 'string' && line.indexOf('-->') !== -1) {
+        const parts = line.split('-->');
         if (parts.length >= 2) {
-          const startStr = parts[0];
-          const endStr = parts[1];
+          const startStr = parts[0]?.trim();
+          const endStr = parts[1]?.trim();
           const word = lines[i + 1]?.trim();
           if (startStr && endStr && word) {
             wordTimestamps.push({

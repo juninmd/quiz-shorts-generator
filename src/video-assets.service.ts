@@ -43,9 +43,9 @@ export const ensureFont = (): string => {
       copied = tryCopy('C:/Windows/Fonts/arialbd.ttf');
       if (!copied) {
         try {
-          spawnSync('cmd', ['/c', 'copy', 'C:\\Windows\\Fonts\\arialbd.ttf', 'assets\\fonts\\arialbd.ttf']);
+          fs.copyFileSync('C:\\Windows\\Fonts\\arialbd.ttf', 'assets\\fonts\\arialbd.ttf');
           copied = true;
-        } catch (e) { console.warn('⚠️ O comando de cópia via shell falhou:', e); }
+        } catch (e) { console.warn('⚠️ O comando de cópia nativo falhou:', e); }
       }
     } else {
       copied = tryCopy('/usr/share/fonts/truetype/msttcorefonts/Arial_Bold.ttf');
