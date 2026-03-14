@@ -53,15 +53,20 @@ export const generateNarration = async (
     // Ex: 00:00:00.000 --> 00:00:00.400\nTexto
     const lines = vttContent.split('\n');
     for (let i = 0; i < lines.length; i++) {
-      if (lines[i]!.includes('-->')) {
-        const [startStr, endStr] = lines[i]!.split(' --> ');
-        const word = lines[i + 1]?.trim();
-        if (word) {
-          wordTimestamps.push({
-            start: vttTimeToSeconds(startStr!),
-            end: vttTimeToSeconds(endStr!),
-            word: word
-          });
+      const line = lines[i];
+      if (line && line.includes('-->')) {
+        const parts = line.split(' --> ');
+        if (parts.length >= 2) {
+          const startStr = parts[0];
+          const endStr = parts[1];
+          const word = lines[i + 1]?.trim();
+          if (startStr && endStr && word) {
+            wordTimestamps.push({
+              start: vttTimeToSeconds(startStr),
+              end: vttTimeToSeconds(endStr),
+              word: word
+            });
+          }
         }
       }
     }

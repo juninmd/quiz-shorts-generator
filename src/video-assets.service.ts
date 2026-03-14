@@ -1,5 +1,6 @@
 import { execSync, spawnSync } from 'child_process';
 import fs from 'fs';
+import crypto from 'crypto';
 import path from 'path';
 import type { Quiz } from './content.service.js';
 
@@ -79,8 +80,14 @@ export const prepareBackground = (tempDir: string): string => {
   }
 
   const bgFiles = fs.readdirSync('assets/backgrounds').filter(f => f.endsWith('.png') || f.endsWith('.jpg') || f.endsWith('.mp4'));
-  const bgSelected = bgFiles.length > 0 ? bgFiles[Math.floor(Math.random() * bgFiles.length)] : 'default.jpg';
-  let bgVideo = path.resolve('assets/backgrounds', bgSelected!);
+
+  let bgSelected = 'default.jpg';
+  if (bgFiles.length > 0) {
+    const randomIndex = crypto.randomInt(0, bgFiles.length);
+    bgSelected = bgFiles[randomIndex] || 'default.jpg';
+  }
+
+  let bgVideo = path.resolve('assets/backgrounds', bgSelected);
 
   if (!fs.existsSync(bgVideo)) {
     bgVideo = defaultBgPath;
