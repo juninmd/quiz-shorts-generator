@@ -12,7 +12,7 @@ jobs:
     env:
       FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
       OLLAMA_MODELS_DIR: /home/runner/.ollama/models
-      OLLAMA_MODEL: qwen3:1.7b # Definido globalmente para consistência do cache
+      OLLAMA_MODEL: qwen2.5:1.5b # Definido globalmente para consistência do cache
 
     steps:
     - name: Checkout Repository
