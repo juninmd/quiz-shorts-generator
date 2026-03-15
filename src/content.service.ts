@@ -24,7 +24,7 @@ const quizSchema = z.object({
 export type Quiz = z.infer<typeof quizSchema>;
 
 export const generateQuiz = async (): Promise<Quiz> => {
-  const modelName = process.env.OLLAMA_MODEL || 'qwen3:1.7b';
+  const modelName = process.env.OLLAMA_MODEL || 'qwen2.5:1.5b';
   const topics = ['jogos', 'filmes', 'séries', 'animes', 'curiosidades gerais', 'bíblia'];
   const topic = topics[Math.floor(Math.random() * topics.length)];
 

@@ -21,7 +21,7 @@
 To fully run the project, including the automated YouTube Shorts post logic, make sure to set up the following environment variables:
 
 - `OLLAMA_HOST`: The host URL for Ollama (default: `http://localhost:11434`).
-- `OLLAMA_MODEL`: The Ollama model to use (default: `qwen3:1.7b`).
+- `OLLAMA_MODEL`: The Ollama model to use (default: `qwen2.5:1.5b`).
 - `TELEGRAM_TOKEN`: Bot token for uploading the video via Telegram.
 - `TELEGRAM_CHAT_ID`: The chat ID for the destination in Telegram.
 - `YOUTUBE_CLIENT_ID`: OAuth2 Client ID for YouTube API.
