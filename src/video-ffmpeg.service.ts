@@ -1,5 +1,5 @@
 import { spawn } from 'child_process';
-import { normalizePath } from './video-assets.service';
+import { normalizePath } from './video-assets.service.js';
 
 const hmsToSeconds = (hms: string): number => {
   const parts = hms.split(':').map(parseFloat);

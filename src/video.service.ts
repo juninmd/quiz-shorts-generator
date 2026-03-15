@@ -1,11 +1,11 @@
 import { spawnSync } from 'child_process';
 import fs from 'fs';
 import path from 'path';
-import type { Quiz } from './content.service';
-import type { WordTimestamp } from './tts.service';
-import { ensureFont, prepareBackground, prepareTextFiles, normalizePath } from './video-assets.service';
-import { generateFilters } from './video-filters.service';
-import { runFFmpeg } from './video-ffmpeg.service';
+import type { Quiz } from './content.service.js';
+import type { WordTimestamp } from './tts.service.js';
+import { ensureFont, prepareBackground, prepareTextFiles, normalizePath } from './video-assets.service.js';
+import { generateFilters } from './video-filters.service.js';
+import { runFFmpeg } from './video-ffmpeg.service.js';
 
 export const assembleVideo = async (
   quiz: Quiz,
