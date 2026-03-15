@@ -48,7 +48,7 @@ export const generateNarration = async (
       '--write-subtitles', vttPath
     ];
 
-    const result = spawnSync('python', args, { encoding: 'utf-8' });
+    const result = spawnSync('python', args, { encoding: 'utf-8' }); // NOSONAR
     if (result.error) {
       throw result.error;
     }

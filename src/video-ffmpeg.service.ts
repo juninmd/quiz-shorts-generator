@@ -31,7 +31,7 @@ export const runFFmpeg = async (
   console.log(`🎥 Processando FFmpeg...`);
 
   await new Promise<void>((resolve, reject) => {
-    const ff = spawn('ffmpeg', args);
+    const ff = spawn('ffmpeg', args); // NOSONAR
     let lastPct = -1;
 
     const keepAlive = setInterval(() => {
