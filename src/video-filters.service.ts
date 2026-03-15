@@ -1,5 +1,5 @@
-import { esc, normalizePath } from './video-assets.service';
-import type { Quiz } from './content.service';
+import { esc, normalizePath } from './video-assets.service.js';
+import type { Quiz } from './content.service.js';
 
 export interface FilterResult {
   ffmpegInputs: string[];

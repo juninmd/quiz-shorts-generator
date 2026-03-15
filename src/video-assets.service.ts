@@ -1,7 +1,7 @@
 import { spawnSync } from 'child_process';
 import fs from 'fs';
 import path from 'path';
-import type { Quiz } from './content.service';
+import type { Quiz } from './content.service.js';
 
 export const wrapText = (text: string, maxLen: number): string => {
   const words = text.split(' ');
