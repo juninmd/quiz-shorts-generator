@@ -1,4 +1,4 @@
-import { execSync } from 'child_process';
+import { spawnSync } from 'child_process';
 import fs from 'fs';
 import path from 'path';
 import type { Quiz } from './content.service';
@@ -42,8 +42,10 @@ export const ensureFont = (): string => {
       copied = tryCopy('C:/Windows/Fonts/arialbd.ttf');
       if (!copied) {
         try {
-          execSync(`cmd /c copy C:\\Windows\\Fonts\\arialbd.ttf assets\\fonts\\arialbd.ttf`);
-          copied = true;
+          spawnSync('cmd', ['/c', 'copy', 'C:\\Windows\\Fonts\\arialbd.ttf', 'assets\\fonts\\arialbd.ttf']);
+          if (fs.existsSync(fontFile)) {
+            copied = true;
+          }
         } catch (e) { console.warn('⚠️ O comando de cópia via shell falhou:', e); }
       }
     } else {
