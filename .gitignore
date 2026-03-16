@@ -15,10 +15,18 @@ coverage/
 
 # Temporary assets and media
 temp_assets/
+output/
 *.mp3
 *.ass
 final_short.mp4
 quiz_*.mp4
+
+# Logs
+*.log
+npm-debug.log*
+pnpm-debug.log*
+yarn-debug.log*
+yarn-error.log*
 
 # OS generated files
 .DS_Store
@@ -29,12 +37,3 @@ Thumbs.db
 .idea/
 *.swp
 *.swo
-
-# Logs
-npm-debug.log*
-pnpm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-.env
-node_modules/*
-coverage/*

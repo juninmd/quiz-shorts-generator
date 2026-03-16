@@ -39,13 +39,21 @@ export const generateNarration = async (
   try {
     // Comando edge-tts do Python com flags de áudio e legendas (vtt)
     // Usando python -m edge_tts para garantir que o executável seja encontrado
-    spawnSync('python', [
+    const args = [
       '-m', 'edge_tts',
       '--voice', voice,
       '--text', text,
       '--write-media', audioPath,
       '--write-subtitles', vttPath
-    ], { stdio: 'inherit' });
+    ];
+
+    const result = spawnSync('python', args, { encoding: 'utf-8' }); // NOSONAR
+    if (result.error) {
+      throw result.error;
+    }
+    if (result.status !== 0) {
+      throw new Error(`Command failed with exit code ${result.status}: ${result.stderr}`);
+    }
 
     // Parse do arquivo VTT para extrair os word timestamps
     const vttContent = fs.readFileSync(vttPath, 'utf8');
@@ -56,19 +64,18 @@ export const generateNarration = async (
     const lines = vttContent.split('\n');
     for (let i = 0; i < lines.length; i++) {
       const line = lines[i];
-      if (typeof line === 'string' && line.indexOf('-->') !== -1) {
-        const parts = line.split('-->');
-        if (parts.length >= 2) {
-          const startStr = parts[0]?.trim();
-          const endStr = parts[1]?.trim();
-          const word = lines[i + 1]?.trim();
-          if (startStr && endStr && word) {
-            wordTimestamps.push({
-              start: vttTimeToSeconds(startStr),
-              end: vttTimeToSeconds(endStr),
-              word: word
-            });
-          }
+      if (line && line.includes('-->')) {
+        const parts = line.split(' --> ');
+        if (parts.length < 2) continue;
+        const [startStr, endStr] = parts;
+        const nextLine = lines[i + 1];
+        const word = nextLine ? nextLine.trim() : undefined;
+        if (word && startStr && endStr) {
+          wordTimestamps.push({
+            start: vttTimeToSeconds(startStr),
+            end: vttTimeToSeconds(endStr),
+            word: word
+          });
         }
       }
     }

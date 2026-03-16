@@ -2,7 +2,7 @@ name: Daily Quiz Shorts Generator (Node.js/TS + Python)
 
 on:
   schedule:
-    - cron: '0 */1 * * *' # Altere para rodar a cada 1 hora
+    - cron: '0 * * * *' # Corrigido: roda exatamente no minuto 0 de cada hora
   workflow_dispatch: # Permite rodar manualmente para testar
 
 jobs:
@@ -12,7 +12,7 @@ jobs:
     env:
       FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
       OLLAMA_MODELS_DIR: /home/runner/.ollama/models
-      OLLAMA_MODEL: qwen3:1.7b # Definido globalmente para consistência do cache
+      OLLAMA_MODEL: gemma3:1b # Definido globalmente para consistência do cache
 
     steps:
     - name: Checkout Repository
@@ -32,6 +32,8 @@ jobs:
     - name: Install System Dependencies
       run: |
         sudo apt-get update
+        # Aceita a licença das fontes da Microsoft automaticamente para evitar que o CI trave
+        echo ttf-mscorefonts-installer msttcorefonts/accepted-mscorefonts-eula select true | sudo debconf-set-selections
         sudo apt-get install -y ffmpeg libass-dev ttf-mscorefonts-installer
         sudo fc-cache -f -v
 
@@ -71,16 +73,20 @@ jobs:
       run: pnpm install
 
     - name: Create Required Folders
-      run: mkdir -p assets/backgrounds assets/music assets/fonts temp_assets
+      run: mkdir -p assets/backgrounds assets/music assets/fonts assets/logo temp_assets output
 
     - name: Run Quiz Generator
       env:
         TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
         TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
         OLLAMA_HOST: ${{ secrets.OLLAMA_HOST }}
-        OLLAMA_MODEL: ${{ secrets.OLLAMA_MODEL }}
+        OLLAMA_MODEL: ${{ env.OLLAMA_MODEL }}
+        YOUTUBE_CLIENT_ID: ${{ secrets.YOUTUBE_CLIENT_ID }}
+        YOUTUBE_CLIENT_SECRET: ${{ secrets.YOUTUBE_CLIENT_SECRET }}
+        YOUTUBE_REFRESH_TOKEN: ${{ secrets.YOUTUBE_REFRESH_TOKEN }}
+        YOUTUBE_CHANNEL_NAME: ${{ secrets.YOUTUBE_CHANNEL_NAME }}
       run: |
-        pnpm start
+        pnpm run generate-daily
 
     - name: Stop Ollama
       if: always()
@@ -97,10 +103,11 @@ jobs:
         path: /home/runner/.ollama/models
         key: ollama-models-${{ env.OLLAMA_MODEL }}
 
-    - name: Upload Video Artifact
+    - name: Upload Generated Shorts
       if: always()
       uses: actions/upload-artifact@v4
       with:
-        name: generated-quiz-video
-        path: quiz_*.mp4
-        retention-days: 1
+        name: generated-quiz-shorts
+        path: output/short_*.mp4
+        retention-days: 7
+        if-no-files-found: warn # Evita que a pipeline quebre caso o script não gere vídeos nessa rodada

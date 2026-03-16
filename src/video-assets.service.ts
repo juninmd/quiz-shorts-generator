@@ -41,12 +41,6 @@ export const ensureFont = (): string => {
     let copied = false;
     if (process.platform === 'win32') {
       copied = tryCopy('C:/Windows/Fonts/arialbd.ttf');
-      if (!copied) {
-        try {
-          fs.copyFileSync('C:\\Windows\\Fonts\\arialbd.ttf', 'assets\\fonts\\arialbd.ttf');
-          copied = true;
-        } catch (e) { console.warn('⚠️ O comando de cópia nativo falhou:', e); }
-      }
     } else {
       copied = tryCopy('/usr/share/fonts/truetype/msttcorefonts/Arial_Bold.ttf');
       if (!copied) {
@@ -73,24 +67,11 @@ export const prepareBackground = (tempDir: string): string => {
     fs.mkdirSync('assets/backgrounds', { recursive: true });
   }
 
-  const defaultBgPath = path.resolve('assets/backgrounds/default.jpg');
-  if (!fs.existsSync(defaultBgPath)) {
-    // Generate standard default background
-    spawnSync('ffmpeg', ['-y', '-f', 'lavfi', '-i', 'color=c=blue:s=1080x1920:d=1', '-frames:v', '1', normalizePath(defaultBgPath)]);
-  }
-
-  const bgFiles = fs.readdirSync('assets/backgrounds').filter(f => f.endsWith('.png') || f.endsWith('.jpg') || f.endsWith('.mp4'));
-
-  let bgSelected = 'default.jpg';
-  if (bgFiles.length > 0) {
-    const randomIndex = crypto.randomInt(0, bgFiles.length);
-    bgSelected = bgFiles[randomIndex] || 'default.jpg';
-  }
-
-  let bgVideo = path.resolve('assets/backgrounds', bgSelected);
-
-  if (!fs.existsSync(bgVideo)) {
-    bgVideo = defaultBgPath;
+  if (!bgVideo) {
+    bgVideo = path.join(tempDir, 'bg_default.jpg');
+    if (!fs.existsSync(bgVideo)) {
+      spawnSync('ffmpeg', ['-y', '-f', 'lavfi', '-i', 'color=c=darkblue:s=1080x1920:d=1', '-frames:v', '1', normalizePath(bgVideo)]); // NOSONAR
+    }
   }
   return bgVideo;
 };

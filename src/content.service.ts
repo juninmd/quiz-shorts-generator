@@ -24,7 +24,7 @@ const quizSchema = z.object({
 export type Quiz = z.infer<typeof quizSchema>;
 
 export const generateQuiz = async (): Promise<Quiz> => {
-  const modelName = process.env.OLLAMA_MODEL || 'qwen3:1.7b';
+  const modelName = process.env.OLLAMA_MODEL || 'gemma3:1b';
   const topics = ['jogos', 'filmes', 'séries', 'animes', 'curiosidades gerais', 'bíblia'];
   const topic = topics[Math.floor(Math.random() * topics.length)];
 
@@ -55,7 +55,7 @@ export const generateQuiz = async (): Promise<Quiz> => {
     });
 
     const content = response.message.content;
-    
+
     // Limpa possíveis blocos de código markdown do JSON
     let cleanContent = content.trim();
     if (cleanContent.startsWith('```json')) {
@@ -64,8 +64,14 @@ export const generateQuiz = async (): Promise<Quiz> => {
       cleanContent = cleanContent.substring(3, cleanContent.lastIndexOf('```')).trim();
     }
 
+    // Tenta extrair JSON válido se houver lixo ao redor
+    const jsonMatch = cleanContent.match(/\{[\s\S]*\}/);
+    if (jsonMatch) {
+      cleanContent = jsonMatch[0];
+    }
+
     const quizData = JSON.parse(cleanContent);
-    
+
     // Se o tema vier faltando ou vazio (erro comum de modelos menores), preenchemos com o topic selecionado
     if (!quizData.tema) {
       quizData.tema = topic;
