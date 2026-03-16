@@ -2,7 +2,7 @@ name: Daily Quiz Shorts Generator (Node.js/TS + Python)
 
 on:
   schedule:
-    - cron: '0 */2 * * *' # Roda a cada 2 horas (gerando 12 videos/dia)
+    - cron: '0 0 * * *' # Roda a cada dia a meia noite (gerando 1 video/dia)
   workflow_dispatch: # Permite rodar manualmente para testar
 
 jobs:
@@ -78,7 +78,7 @@ jobs:
         YOUTUBE_CLIENT_SECRET: ${{ secrets.YOUTUBE_CLIENT_SECRET }}
         YOUTUBE_REFRESH_TOKEN: ${{ secrets.YOUTUBE_REFRESH_TOKEN }}
         YOUTUBE_CHANNEL_NAME: ${{ secrets.YOUTUBE_CHANNEL_NAME }}
-        ENABLE_YOUTUBE: 'false'
+        ENABLE_YOUTUBE: 'true'
       run: |
         echo "Verificando conectividade com Ollama..."
         if ! curl -s http://localhost:11434/api/tags > /dev/null; then

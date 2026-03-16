@@ -26,10 +26,20 @@ export const assembleVideo = async (
 
     const totalSeconds = aDur + 5;
 
-    const musicPath = normalizePath('assets/music/background.mp3');
+    const musicDir = path.resolve('assets/music');
+    let musicPath = '';
+    if (fs.existsSync(musicDir)) {
+      const musicFiles = fs.readdirSync(musicDir).filter(f => f.startsWith('background') && f.endsWith('.mp3'));
+      if (musicFiles.length > 0) {
+        const randomMusic = musicFiles[Math.floor(Math.random() * musicFiles.length)] || '';
+        musicPath = normalizePath(path.join('assets/music', randomMusic));
+        console.log(`🎵 Usando música de fundo: ${randomMusic}`);
+      }
+    }
+
     const beepPath = normalizePath('assets/music/beep.mp3');
     const logoPath = normalizePath('assets/logo/logo.png');
-    const hasMusic = fs.existsSync(musicPath);
+    const hasMusic = fs.existsSync(musicPath) && musicPath !== '';
     const hasBeep = fs.existsSync(beepPath);
     const hasLogo = fs.existsSync(logoPath);
 

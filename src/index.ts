@@ -5,6 +5,7 @@ import { assembleVideo } from './video.service.js';
 import { sendVideoToTelegram } from './telegram.service.js';
 import { generateYoutubeMetadata, uploadToYouTube } from './youtube.service.js';
 import fs from 'fs';
+import path from 'path';
 
 async function main() {
   console.log('🚀 Iniciando geração de Quiz Short (Node.js/TS)...');
@@ -27,7 +28,11 @@ async function main() {
     // 3. Montar Vídeo (FFmpeg)
     console.log('🎬 Montando o vídeo (FFmpeg)...');
     console.time('Video_Assembly');
-    const outputFileName = `quiz_${quiz.tema.replace(/\s+/g, '_')}.mp4`;
+    const outputDir = path.resolve('output');
+    if (!fs.existsSync(outputDir)) {
+      fs.mkdirSync(outputDir, { recursive: true });
+    }
+    const outputFileName = path.join(outputDir, `quiz_${quiz.tema.replace(/\s+/g, '_')}.mp4`);
     await assembleVideo(quiz, {
       qPath: qNarration.audioPath,
       aPath: aNarration.audioPath,
@@ -56,9 +61,7 @@ async function main() {
       if (fs.existsSync('temp_assets')) {
         fs.rmSync('temp_assets', { recursive: true, force: true });
       }
-      if (fs.existsSync(outputFileName) && !process.env.GITHUB_ACTIONS) {
-        fs.unlinkSync(outputFileName);
-      }
+      // Arquivo de vídeo mantido na pasta output/
       console.log('✨ Processo concluído com sucesso!');
       // close the process explicitly so CI or long‑running runners don't hang
       process.exit(0);

@@ -61,11 +61,9 @@ export const ensureFont = (): string => {
 };
 
 export const prepareBackground = (tempDir: string): string => {
-  const bgFiles = fs.existsSync('assets/backgrounds') ? fs.readdirSync('assets/backgrounds').filter(f => f.endsWith('.png') || f.endsWith('.jpg') || f.endsWith('.mp4')) : [];
-  const bgSelected = bgFiles.length > 0 ? bgFiles[Math.floor(Math.random() * bgFiles.length)] : undefined;
-  let bgVideo = bgSelected ? path.resolve('assets/backgrounds', bgSelected) : '';
+  let bgVideo = path.resolve('assets/backgrounds/neon.png');
 
-  if (!bgVideo) {
+  if (!fs.existsSync(bgVideo)) {
     bgVideo = path.join(tempDir, 'bg_default.jpg');
     if (!fs.existsSync(bgVideo)) {
       spawnSync('ffmpeg', ['-y', '-f', 'lavfi', '-i', 'color=c=darkblue:s=1080x1920:d=1', '-frames:v', '1', normalizePath(bgVideo)]); // NOSONAR

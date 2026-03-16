@@ -16,7 +16,6 @@ coverage/
 # Temporary assets and media
 temp_assets/
 output/
-*.mp3
 *.ass
 final_short.mp4
 quiz_*.mp4
