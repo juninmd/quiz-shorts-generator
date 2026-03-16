@@ -78,6 +78,7 @@ jobs:
         YOUTUBE_CLIENT_SECRET: ${{ secrets.YOUTUBE_CLIENT_SECRET }}
         YOUTUBE_REFRESH_TOKEN: ${{ secrets.YOUTUBE_REFRESH_TOKEN }}
         YOUTUBE_CHANNEL_NAME: ${{ secrets.YOUTUBE_CHANNEL_NAME }}
+        ENABLE_YOUTUBE: 'false'
       run: |
         echo "Verificando conectividade com Ollama..."
         if ! curl -s http://localhost:11434/api/tags > /dev/null; then

@@ -11,6 +11,15 @@ const ollama = new Ollama({
 });
 
 export const generateYoutubeMetadata = async (quiz: Quiz): Promise<{ title: string; description: string }> => {
+  const isEnabled = process.env.ENABLE_YOUTUBE === 'true';
+
+  if (!isEnabled) {
+    return {
+      title: `Quiz: ${quiz.tema}!`,
+      description: `Teste seus conhecimentos! #quiz #shorts #curiosidades`
+    };
+  }
+
   const modelName = process.env.OLLAMA_MODEL || 'gemma3:1b';
   const channelInfo = process.env.YOUTUBE_CHANNEL_NAME ? ` do canal ${process.env.YOUTUBE_CHANNEL_NAME}` : '';
 
@@ -65,6 +74,13 @@ export const uploadToYouTube = async (
   const clientId = process.env.YOUTUBE_CLIENT_ID;
   const clientSecret = process.env.YOUTUBE_CLIENT_SECRET;
   const refreshToken = process.env.YOUTUBE_REFRESH_TOKEN;
+
+  const isEnabled = process.env.ENABLE_YOUTUBE === 'true';
+
+  if (!isEnabled) {
+    console.log('⏩ Upload para o YouTube desativado (ENABLE_YOUTUBE=false). Apenas enviando localmente/Telegram.');
+    return false;
+  }
 
   if (!clientId || !clientSecret || !refreshToken) {
     console.warn('⚠️ Credenciais do YouTube ausentes no .env. Pulando upload para o YouTube.');

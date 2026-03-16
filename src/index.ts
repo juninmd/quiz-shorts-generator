@@ -42,9 +42,13 @@ async function main() {
     const sent = await sendVideoToTelegram(outputFileName, caption);
 
     // 5. YouTube Upload
-    console.log('🎥 Gerando metadados e enviando para o YouTube...');
-    const { title, description } = await generateYoutubeMetadata(quiz);
-    await uploadToYouTube(outputFileName, title, description);
+    if (process.env.ENABLE_YOUTUBE === 'true') {
+      console.log('🎥 Gerando metadados e enviando para o YouTube...');
+      const { title, description } = await generateYoutubeMetadata(quiz);
+      await uploadToYouTube(outputFileName, title, description);
+    } else {
+      console.log('⏩ Upload do YouTube desabilitado. Pulando fase 5...');
+    }
 
     // 6. Limpeza
     if (sent) {
