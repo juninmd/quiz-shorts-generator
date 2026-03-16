@@ -51,23 +51,14 @@ jobs:
         node-version: '24'
         cache: 'pnpm'
 
-    - name: Restore Ollama Models Cache
-      id: cache-ollama
-      uses: actions/cache/restore@v4
+    - name: Setup Ollama with Cache
+      id: ollama-setup
+      uses: ./.github/actions/setup-ollama
       with:
-        path: /home/runner/.ollama/models
-        key: ollama-models-${{ env.OLLAMA_MODEL }}
-
-    - name: Setup Ollama
-      run: |
-        curl -fsSL https://ollama.com/install.sh | sh
-        ollama serve > /tmp/ollama.log 2>&1 &
-        echo $! > /tmp/ollama.pid
-        sleep 10
-        if [ "${{ steps.cache-ollama.outputs.cache-hit }}" != 'true' ]; then
-          ollama pull ${{ env.OLLAMA_MODEL }}
-        fi
-        ollama list
+        model: ${{ env.OLLAMA_MODEL }}
+        ollama-host: http://localhost:11434
+        wait-timeout: 120
+        cache-enabled: true
 
     - name: Install Project Dependencies
       run: pnpm install
@@ -79,29 +70,28 @@ jobs:
       env:
         TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
         TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
-        OLLAMA_HOST: ${{ secrets.OLLAMA_HOST }}
+        OLLAMA_HOST: http://localhost:11434
         OLLAMA_MODEL: ${{ env.OLLAMA_MODEL }}
         YOUTUBE_CLIENT_ID: ${{ secrets.YOUTUBE_CLIENT_ID }}
         YOUTUBE_CLIENT_SECRET: ${{ secrets.YOUTUBE_CLIENT_SECRET }}
         YOUTUBE_REFRESH_TOKEN: ${{ secrets.YOUTUBE_REFRESH_TOKEN }}
         YOUTUBE_CHANNEL_NAME: ${{ secrets.YOUTUBE_CHANNEL_NAME }}
       run: |
+        echo "Verificando conectividade com Ollama..."
+        if ! curl -s http://localhost:11434/api/tags > /dev/null; then
+          echo "❌ Falha: Ollama não está respondendo em http://localhost:11434"
+          cat /tmp/ollama.log || echo "Log não disponível"
+          exit 1
+        fi
+        echo "✅ Ollama está acessível"
         pnpm run generate-daily
 
-    - name: Stop Ollama
+    - name: Stop Ollama & Save Cache
       if: always()
-      run: |
-        if [ -f /tmp/ollama.pid ]; then
-          kill "$(cat /tmp/ollama.pid)" || true
-        fi
-        pkill -f "ollama serve" || true
-
-    - name: Save Ollama Models Cache
-      if: always() && steps.cache-ollama.outputs.cache-hit != 'true'
-      uses: actions/cache/save@v4
+      uses: ./.github/actions/cleanup-ollama
       with:
-        path: /home/runner/.ollama/models
-        key: ollama-models-${{ env.OLLAMA_MODEL }}
+        cache-enabled: true
+        cache-key: ollama-models-${{ env.OLLAMA_MODEL }}
 
     - name: Upload Generated Shorts
       if: always()

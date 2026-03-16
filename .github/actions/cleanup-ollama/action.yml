@@ -1,0 +1,40 @@
+name: 'Cleanup Ollama Service'
+description: 'Para o serviço Ollama e salva cache de modelos'
+
+inputs:
+  cache-enabled:
+    description: 'Habilitar cache de modelos (true/false)'
+    required: false
+    default: 'true'
+  cache-key:
+    description: 'Chave para salvar cache (ex: ollama-models-gemma3:1b)'
+    required: false
+    default: ''
+
+runs:
+  using: 'composite'
+
+  steps:
+    - name: Stop Ollama Service
+      shell: bash
+      if: always()
+      run: |
+        echo "⏹️ Parando serviço Ollama..."
+        if [ -f /tmp/ollama.pid ]; then
+          PID=$(cat /tmp/ollama.pid)
+          if kill -0 "$PID" 2>/dev/null; then
+            kill "$PID" || true
+            sleep 2
+            kill -9 "$PID" 2>/dev/null || true
+            echo "✅ Process $PID finalizado"
+          fi
+        fi
+        pkill -f "ollama serve" || true
+        echo "✅ Ollama parado"
+
+    - name: Save Ollama Models Cache
+      if: inputs.cache-enabled == 'true' && inputs.cache-key != ''
+      uses: actions/cache/save@v4
+      with:
+        path: /home/runner/.ollama/models
+        key: ${{ inputs.cache-key }}
