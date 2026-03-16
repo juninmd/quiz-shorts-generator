@@ -27,7 +27,7 @@ export const runFFmpeg = async (
     '-threads', '0',
     '-c:a', 'aac',
     '-pix_fmt', 'yuv420p',
-    '-shortest',
+    '-t', totalSeconds.toString(),
     normalizePath(outputPath)
   );
 

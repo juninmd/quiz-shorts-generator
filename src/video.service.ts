@@ -24,7 +24,7 @@ export const assembleVideo = async (
     const qDur = parseFloat(spawnSync('ffprobe', ['-v', 'error', '-show_entries', 'format=duration', '-of', 'default=noprint_wrappers=1:nokey=1', qPath]).stdout.toString().trim()); // NOSONAR
     const aDur = parseFloat(spawnSync('ffprobe', ['-v', 'error', '-show_entries', 'format=duration', '-of', 'default=noprint_wrappers=1:nokey=1', aPath]).stdout.toString().trim()); // NOSONAR
 
-    const totalSeconds = aDur + 5;
+    const totalSeconds = qDur + aDur + 5;
 
     const musicDir = path.resolve('assets/music');
     let musicPath = '';
