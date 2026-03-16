@@ -2,7 +2,7 @@ name: Daily Quiz Shorts Generator (Node.js/TS + Python)
 
 on:
   schedule:
-    - cron: '0 */1 * * *' # Altere para rodar a cada 1 hora
+    - cron: '0 * * * *' # Corrigido: roda exatamente no minuto 0 de cada hora
   workflow_dispatch: # Permite rodar manualmente para testar
 
 jobs:
@@ -32,6 +32,8 @@ jobs:
     - name: Install System Dependencies
       run: |
         sudo apt-get update
+        # Aceita a licença das fontes da Microsoft automaticamente para evitar que o CI trave
+        echo ttf-mscorefonts-installer msttcorefonts/accepted-mscorefonts-eula select true | sudo debconf-set-selections
         sudo apt-get install -y ffmpeg libass-dev ttf-mscorefonts-installer
         sudo fc-cache -f -v
 
@@ -108,3 +110,4 @@ jobs:
         name: generated-quiz-shorts
         path: output/short_*.mp4
         retention-days: 7
+        if-no-files-found: warn # Evita que a pipeline quebre caso o script não gere vídeos nessa rodada
