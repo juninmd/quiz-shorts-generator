@@ -20,7 +20,10 @@ export const runFFmpeg = async (
   args.push(
     '-c:v', 'libx264',
     '-preset', 'ultrafast',
-    '-crf', '23',
+    '-tune', 'fastdecode,zerolatency',
+    '-filter_threads', '2',
+    '-r', '30',
+    '-crf', '28',
     '-threads', '0',
     '-c:a', 'aac',
     '-pix_fmt', 'yuv420p',
