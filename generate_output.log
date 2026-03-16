@@ -1,0 +1,29 @@
+🚀 Iniciando geração de 5 shorts...
+Verificando Ollama...
+Gerando shorts...
+
+> quiz-shorts-generator@1.0.0 generate-daily D:\Solutions\pessoal\quiz-shorts-generator
+> tsx src/generate-daily.ts
+
+🚀 GERANDO 5 QUIZ SHORTS DO DIA
+
+
+📺 [1/5] Iniciando short...
+🤖 Usando biblioteca oficial Ollama com modelo: qwen3:1.7b
+
+📺 [2/5] Iniciando short...
+🤖 Usando biblioteca oficial Ollama com modelo: qwen3:1.7b
+❌ Erro no processamento do conteúdo Ollama: an error was encountered while running the model: GGML_ASSERT(ctx->mem_buffer != NULL) failed
+   ❌ Erro no short #2: Error: Falha na geração de conteúdo via Ollama.
+    at generateQuiz (D:\Solutions\pessoal\quiz-shorts-generator\src\content.service.ts:87:11)
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async generateSingleShort (D:\Solutions\pessoal\quiz-shorts-generator\src\generate-daily.ts:17:18)
+    at async Promise.all (index 1)
+    at async main (D:\Solutions\pessoal\quiz-shorts-generator\src\generate-daily.ts:74:28)
+❌ Erro: Error: Falha na geração de conteúdo via Ollama.
+    at generateQuiz (D:\Solutions\pessoal\quiz-shorts-generator\src\content.service.ts:87:11)
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async generateSingleShort (D:\Solutions\pessoal\quiz-shorts-generator\src\generate-daily.ts:17:18)
+    at async Promise.all (index 1)
+    at async main (D:\Solutions\pessoal\quiz-shorts-generator\src\generate-daily.ts:74:28)
+ ELIFECYCLE  Command failed with exit code 1.

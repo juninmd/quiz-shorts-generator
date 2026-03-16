@@ -12,7 +12,7 @@ jobs:
     env:
       FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
       OLLAMA_MODELS_DIR: /home/runner/.ollama/models
-      OLLAMA_MODEL: qwen2.5:1.5b # Definido globalmente para consistência do cache
+      OLLAMA_MODEL: gemma3:1b # Definido globalmente para consistência do cache
 
     steps:
     - name: Checkout Repository
@@ -71,7 +71,7 @@ jobs:
       run: pnpm install
 
     - name: Create Required Folders
-      run: mkdir -p assets/backgrounds assets/music assets/fonts temp_assets
+      run: mkdir -p assets/backgrounds assets/music assets/fonts assets/logo temp_assets output
 
     - name: Run Quiz Generator
       env:
@@ -80,7 +80,7 @@ jobs:
         OLLAMA_HOST: ${{ secrets.OLLAMA_HOST }}
         OLLAMA_MODEL: ${{ secrets.OLLAMA_MODEL }}
       run: |
-        pnpm start
+        pnpm run generate-daily
 
     - name: Stop Ollama
       if: always()
@@ -97,10 +97,10 @@ jobs:
         path: /home/runner/.ollama/models
         key: ollama-models-${{ env.OLLAMA_MODEL }}
 
-    - name: Upload Video Artifact
+    - name: Upload Generated Shorts
       if: always()
       uses: actions/upload-artifact@v4
       with:
-        name: generated-quiz-video
-        path: quiz_*.mp4
-        retention-days: 1
+        name: generated-quiz-shorts
+        path: output/short_*.mp4
+        retention-days: 7

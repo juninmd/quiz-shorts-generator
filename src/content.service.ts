@@ -30,9 +30,9 @@ export const generateQuiz = async (): Promise<Quiz> => {
 
   console.log(`🤖 Usando biblioteca oficial Ollama com modelo: ${modelName}`);
 
-  const prompt = `Gere um quiz educativo sobre o tema: ${topic}. 
-    Seja um verificador de fatos rigoroso. 
-    Garanta precisão histórica/técnica e um fato curioso que valide a resposta. 
+  const prompt = `Gere um quiz educativo sobre o tema: ${topic}.
+    Seja um verificador de fatos rigoroso.
+    Garanta precisão histórica/técnica e um fato curioso que valide a resposta.
     Os textos DEVEM ser extremamente curtos e diretos, pois o vídeo terá no máximo 1 minuto de duração padronizada (Shorts).
     A pergunta deve ter no máximo 40 caracteres.
     As opções no máximo 15 caracteres cada.
@@ -55,7 +55,7 @@ export const generateQuiz = async (): Promise<Quiz> => {
     });
 
     const content = response.message.content;
-    
+
     // Limpa possíveis blocos de código markdown do JSON
     let cleanContent = content.trim();
     if (cleanContent.startsWith('```json')) {
@@ -64,8 +64,14 @@ export const generateQuiz = async (): Promise<Quiz> => {
       cleanContent = cleanContent.substring(3, cleanContent.lastIndexOf('```')).trim();
     }
 
+    // Tenta extrair JSON válido se houver lixo ao redor
+    const jsonMatch = cleanContent.match(/\{[\s\S]*\}/);
+    if (jsonMatch) {
+      cleanContent = jsonMatch[0];
+    }
+
     const quizData = JSON.parse(cleanContent);
-    
+
     // Se o tema vier faltando ou vazio (erro comum de modelos menores), preenchemos com o topic selecionado
     if (!quizData.tema) {
       quizData.tema = topic;
