@@ -36,3 +36,5 @@ Thumbs.db
 .idea/
 *.swp
 *.swo
+cookies.txt
+tokens.json
