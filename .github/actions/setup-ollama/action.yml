@@ -49,6 +49,12 @@ runs:
         curl -fsSL https://ollama.com/install.sh | sh
         echo "✅ Ollama instalado"
 
+        echo "🛑 Parando serviço systemd do Ollama (se estiver rodando)..."
+        pkill -f "ollama serve" || true
+        sudo systemctl stop ollama 2>/dev/null || true
+        sleep 2
+        echo "✅ Serviço parado"
+
     - name: Start Ollama Service
       shell: bash
       env:
