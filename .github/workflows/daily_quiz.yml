@@ -78,7 +78,7 @@ jobs:
         TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
         TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
         OLLAMA_HOST: ${{ secrets.OLLAMA_HOST }}
-        OLLAMA_MODEL: ${{ secrets.OLLAMA_MODEL }}
+        OLLAMA_MODEL: ${{ envs.OLLAMA_MODEL }}
       run: |
         pnpm run generate-daily
 
