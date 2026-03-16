@@ -2,7 +2,7 @@ name: Daily Quiz Shorts Generator (Node.js/TS + Python)
 
 on:
   schedule:
-    - cron: '0 * * * *' # Corrigido: roda exatamente no minuto 0 de cada hora
+    - cron: '0 */2 * * *' # Roda a cada 2 horas (gerando 12 videos/dia)
   workflow_dispatch: # Permite rodar manualmente para testar
 
 jobs:
@@ -54,7 +54,7 @@ jobs:
 
     - name: Setup Ollama with Cache
       id: ollama-setup
-      uses: ./.github/actions/setup-ollama
+      uses: juninmd/base-actions/setup-ollama@main
       with:
         model: ${{ env.OLLAMA_MODEL }}
         ollama-host: http://localhost:11434
@@ -86,14 +86,8 @@ jobs:
           exit 1
         fi
         echo "✅ Ollama está acessível"
-        pnpm run generate-daily
+        pnpm run start
 
-    - name: Stop Ollama & Save Cache
-      if: always()
-      uses: ./.github/actions/cleanup-ollama
-      with:
-        cache-enabled: true
-        cache-key: ollama-models-${{ env.OLLAMA_MODEL }}
 
     - name: Upload Generated Shorts
       if: always()
