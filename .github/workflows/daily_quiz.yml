@@ -13,6 +13,7 @@ jobs:
       FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
       OLLAMA_MODELS_DIR: /home/runner/.ollama/models
       OLLAMA_MODEL: gemma3:1b # Definido globalmente para consistência do cache
+      OLLAMA_HOST: http://localhost:11434
 
     steps:
     - name: Checkout Repository
@@ -57,7 +58,8 @@ jobs:
       with:
         model: ${{ env.OLLAMA_MODEL }}
         ollama-host: http://localhost:11434
-        wait-timeout: 120
+        wait-timeout: 180
+        pull-timeout: 15
         cache-enabled: true
 
     - name: Install Project Dependencies
