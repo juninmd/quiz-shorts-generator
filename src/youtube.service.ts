@@ -11,7 +11,7 @@ const ollama = new Ollama({
 });
 
 export const generateYoutubeMetadata = async (quiz: Quiz): Promise<{ title: string; description: string }> => {
-  const modelName = process.env.OLLAMA_MODEL || 'qwen2.5:1.5b';
+  const modelName = process.env.OLLAMA_MODEL || 'gemma3:1b';
   const channelInfo = process.env.YOUTUBE_CHANNEL_NAME ? ` do canal ${process.env.YOUTUBE_CHANNEL_NAME}` : '';
 
   const prompt = `Crie um título e uma descrição para um vídeo do YouTube Shorts${channelInfo} sobre o seguinte quiz:
