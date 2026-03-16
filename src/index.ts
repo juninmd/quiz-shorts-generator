@@ -2,7 +2,7 @@ import 'dotenv/config';
 import { generateQuiz } from './content.service.js';
 import { generateNarration } from './tts.service.js';
 import { assembleVideo } from './video.service.js';
-import { sendVideoToTelegram } from './telegram.service.js';
+import { sendVideoToTelegram, sendMessageToTelegram } from './telegram.service.js';
 import { generateYoutubeMetadata, uploadToYouTube } from './youtube.service.js';
 import fs from 'fs';
 import path from 'path';
@@ -50,7 +50,13 @@ async function main() {
     if (process.env.ENABLE_YOUTUBE === 'true') {
       console.log('🎥 Gerando metadados e enviando para o YouTube...');
       const { title, description } = await generateYoutubeMetadata(quiz);
-      await uploadToYouTube(outputFileName, title, description);
+      const url = await uploadToYouTube(outputFileName, title, description);
+      
+      if (url) {
+        console.log('📤 Repassando link do YouTube para o Telegram...');
+        const ytCaption = `📺 <b>O vídeo do quiz "${quiz.tema.toUpperCase()}" também já está no YouTube!</b>\n\nAssista e deixe aquele like: ${url}`;
+        await sendMessageToTelegram(ytCaption);
+      }
     } else {
       console.log('⏩ Upload do YouTube desabilitado. Pulando fase 5...');
     }

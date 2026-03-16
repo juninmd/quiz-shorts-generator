@@ -70,7 +70,7 @@ export const uploadToYouTube = async (
   videoPath: string,
   title: string,
   description: string
-): Promise<boolean> => {
+): Promise<string | null> => {
   const clientId = process.env.YOUTUBE_CLIENT_ID;
   const clientSecret = process.env.YOUTUBE_CLIENT_SECRET;
   const refreshToken = process.env.YOUTUBE_REFRESH_TOKEN;
@@ -79,12 +79,12 @@ export const uploadToYouTube = async (
 
   if (!isEnabled) {
     console.log('⏩ Upload para o YouTube desativado (ENABLE_YOUTUBE=false). Apenas enviando localmente/Telegram.');
-    return false;
+    return null;
   }
 
   if (!clientId || !clientSecret || !refreshToken) {
     console.warn('⚠️ Credenciais do YouTube ausentes no .env. Pulando upload para o YouTube.');
-    return false;
+    return null;
   }
 
   const oauth2Client = new google.auth.OAuth2(clientId, clientSecret);
@@ -116,10 +116,11 @@ export const uploadToYouTube = async (
         body: fs.createReadStream(videoPath),
       },
     });
-    console.log(`✅ Vídeo enviado para o YouTube! URL: https://youtube.com/shorts/${res.data?.id}`);
-    return true;
+    const url = `https://youtube.com/shorts/${res.data?.id}`;
+    console.log(`✅ Vídeo enviado para o YouTube! URL: ${url}`);
+    return url;
   } catch (error: any) {
     console.error('❌ Erro ao enviar para o YouTube:', error.message || error);
-    return false;
+    return null;
   }
 };

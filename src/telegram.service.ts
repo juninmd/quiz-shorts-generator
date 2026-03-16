@@ -39,3 +39,35 @@ export const sendVideoToTelegram = async (
     } catch {}
   }
 };
+
+export const sendMessageToTelegram = async (
+  message: string
+): Promise<boolean> => {
+  const token = process.env.TELEGRAM_TOKEN;
+  const chatId = process.env.TELEGRAM_CHAT_ID;
+
+  if (!token || !chatId) {
+    console.error('Erro: TELEGRAM_TOKEN ou TELEGRAM_CHAT_ID não configurados no .env');
+    return false;
+  }
+
+  const bot = new Bot(token);
+
+  console.log(`📤 Enviando mensagem de texto para o Telegram...`);
+
+  try {
+    await bot.api.sendMessage(chatId, message, {
+      parse_mode: 'HTML'
+    });
+    console.log('✅ Mensagem enviada com sucesso!');
+    return true;
+  } catch (error: any) {
+    const errorMessage = (error.message || String(error)).replace(token, '***TOKEN_OCULTO***');
+    console.error('❌ Erro ao enviar mensagem para o Telegram:', errorMessage);
+    return false;
+  } finally {
+    try {
+      await bot.stop();
+    } catch {}
+  }
+};
