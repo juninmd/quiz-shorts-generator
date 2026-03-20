@@ -58,7 +58,7 @@ Mundo`;
     expect(result.audioPath).toBe(path.join('temp_assets', 'file.mp3'));
     expect(result.wordTimestamps).toHaveLength(2);
     expect(result.wordTimestamps[0]).toEqual({ start: 0.1, end: 0.5, word: 'Olá' });
-    expect(result.wordTimestamps[1]).toEqual({ start: 0.6, end: 1.0, word: 'Mundo' });
+    expect(result.wordTimestamps[1]).toEqual({ start: 0.6, end: 1, word: 'Mundo' });
 
     consoleSpy.mockRestore();
   });

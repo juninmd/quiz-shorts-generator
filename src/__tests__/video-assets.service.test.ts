@@ -27,7 +27,7 @@ describe('VideoAssetsService', () => {
 
   describe('normalizePath', () => {
     it('deve resolver e substituir contra-barras', () => {
-      const result = normalizePath('foo\\bar');
+      const result = normalizePath(String.raw`foo\bar`);
       // On Windows it would output full path with forward slashes.
       // On Linux it just resolves foo\bar. Let's just check no backslashes are present.
       expect(result).not.toContain('\\');
@@ -36,7 +36,7 @@ describe('VideoAssetsService', () => {
 
   describe('rel', () => {
     it('deve retornar caminho relativo sem contra-barras', () => {
-      const result = rel('foo\\bar');
+      const result = rel(String.raw`foo\bar`);
       expect(result).not.toContain('\\');
     });
   });
@@ -44,7 +44,7 @@ describe('VideoAssetsService', () => {
   describe('esc', () => {
     it('deve escapar dois pontos', () => {
       const result = esc('C:/foo:bar');
-      expect(result).toContain('\\:');
+      expect(result).toContain(String.raw`\:`);
     });
   });
 

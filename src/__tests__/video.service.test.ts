@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { assembleVideo } from '../video.service.js';
 import * as child_process from 'node:child_process';
 import * as fs from 'node:fs';
-import * as path from 'node:path';
+
 
 vi.mock('child_process');
 vi.mock('fs');
