@@ -17,7 +17,7 @@ vi.mock('../youtube.service.js');
 vi.mock('fs');
 
 // We have to mock process.exit
-const mockExit = vi.spyOn(process, 'exit').mockImplementation((() => {}) as any);
+const mockExit = vi.spyOn(process, 'exit').mockImplementation((() => {}) as never);
 
 describe('Index (Main Execution Loop)', () => {
   const originalEnv = process.env;
@@ -56,7 +56,7 @@ describe('Index (Main Execution Loop)', () => {
 
   it('deve executar o fluxo completo sem youtube e sucesso no telegram', async () => {
     setupMocks('false', true, false);
-    vi.mocked(fs.existsSync).mockImplementation((p: any) => String(p).includes('temp_assets'));
+    vi.mocked(fs.existsSync).mockImplementation((p: string) => String(p).includes('temp_assets'));
 
     vi.resetModules(); // we reset inside the test right before importing
     await import('../index.js');
