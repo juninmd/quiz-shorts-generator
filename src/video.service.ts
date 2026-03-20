@@ -49,14 +49,14 @@ export const assembleVideo = async (
     fs.writeFileSync(qTxtPath, wrapText(quiz.pergunta, 35));
 
     const optTxtPaths: Record<string, string> = {};
-    for (const opt of ['A', 'B', 'C', 'D']) {
+    for (const opt of ['A', 'B', 'C', 'D'] as const) {
       const p = path.join(tempDir, `opt${opt}.txt`);
-      // @ts-ignore - indexing is safe here
+      // @ts-ignore is no longer needed as this is now type-safe
       fs.writeFileSync(p, wrapText(`${opt}) ${quiz.opcoes[opt]}`, 40));
       optTxtPaths[opt] = p;
     }
 
-    const fontFile = '/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf';
+    const fontFile = process.env.FONT_FILE || '/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf';
 
     const filters: string[] = [];
 
@@ -87,7 +87,7 @@ export const assembleVideo = async (
     }
 
     // Highlight resposta correta (muda cor para verde no momento que a resposta é falada)
-    const correctOpt = quiz.resposta_correta as string;
+    const correctOpt = quiz.resposta_correta;
     filters.push(`[${vCurrent}]drawtext=textfile='${optTxtPaths[correctOpt]}':fontfile=${fontFile}:fontcolor=green:fontsize=50:x=100:y=${optY[correctOpt]}:bordercolor=black:borderw=3:enable='gte(t,${qDur + 5})'[vout]`);
 
     const filterGraph = filters.join('; ');
@@ -95,7 +95,7 @@ export const assembleVideo = async (
     fs.writeFileSync(filterScriptPath, filterGraph);
 
     // O fundo pode ser imagem ou vídeo. Se for imagem, precisa do -loop 1
-    const isImage = bgVideo.endsWith('.jpg') || bgVideo.endsWith('.png');
+    const isImage = bgVideo.endsWith('.jpg') || bgVideo.endsWith('.jpeg') || bgVideo.endsWith('.png');
     const bgInputArgs = isImage ? `-loop 1 -framerate 30 -i "${bgVideo}"` : `-i "${bgVideo}"`;
 
     const mixCmd = `ffmpeg -y ${bgInputArgs} -i "${audioData.qPath}" -i "${audioData.aPath}" -filter_complex_script "${filterScriptPath}" -map "[vout]" -map "[aout]" -c:v libx264 -c:a aac -pix_fmt yuv420p -shortest "${outputPath}"`;
