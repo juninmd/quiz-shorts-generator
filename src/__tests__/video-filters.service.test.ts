@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from 'vitest';
 import { generateFilters } from '../video-filters.service.js';
-import path from 'path';
+import path from 'node:path';
 
 vi.mock('../video-assets.service.js', async (importOriginal) => {
   const mod = await importOriginal<any>();

@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { generateYoutubeMetadata, uploadToYouTube } from '../youtube.service.js';
-import * as fs from 'fs';
+import * as fs from 'node:fs';
 import { Ollama } from 'ollama';
 
 vi.mock('fs');

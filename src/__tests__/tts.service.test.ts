@@ -1,8 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { generateNarration } from '../tts.service.js';
-import * as fs from 'fs';
-import * as child_process from 'child_process';
-import path from 'path';
+import * as fs from 'node:fs';
+import * as child_process from 'node:child_process';
+import path from 'node:path';
 
 vi.mock('fs');
 vi.mock('child_process');
