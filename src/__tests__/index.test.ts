@@ -49,7 +49,7 @@ describe('Index (Main Execution Loop)', () => {
     vi.mocked(sendMessageToTelegram).mockResolvedValue(true);
 
     vi.mocked(generateYoutubeMetadata).mockResolvedValue({ title: 'T', description: 'D' });
-    vi.mocked(uploadToYouTube).mockResolvedValue(ytUploadSuccess ? 'http://youtube' : null);
+    vi.mocked(uploadToYouTube).mockResolvedValue(ytUploadSuccess ? 'https://youtube' : null);
 
     vi.mocked(fs.existsSync).mockReturnValue(false);
   };
