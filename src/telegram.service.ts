@@ -36,7 +36,9 @@ export const sendVideoToTelegram = async (
     // clean up bot internals (HTTP agent) even though we didn't start polling
     try {
       await bot.stop();
-    } catch {}
+    } catch (error) {
+      if (error) console.error('Erro ao parar o bot:', error);
+    }
   }
 };
 
@@ -68,6 +70,8 @@ export const sendMessageToTelegram = async (
   } finally {
     try {
       await bot.stop();
-    } catch {}
+    } catch (error) {
+      if (error) console.error('Erro ao parar o bot:', error);
+    }
   }
 };
