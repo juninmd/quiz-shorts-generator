@@ -31,7 +31,7 @@ export const assembleVideo = async (
     if (fs.existsSync(musicDir)) {
       const musicFiles = fs.readdirSync(musicDir).filter(f => f.startsWith('background') && f.endsWith('.mp3'));
       if (musicFiles.length > 0) {
-        const randomMusic = musicFiles[Math.floor(Math.random() * musicFiles.length)] || '';
+        const randomMusic = musicFiles[Math.floor(Math.random() * musicFiles.length)] as string;
         musicPath = normalizePath(path.join('assets/music', randomMusic));
         console.log(`🎵 Usando música de fundo: ${randomMusic}`);
       }

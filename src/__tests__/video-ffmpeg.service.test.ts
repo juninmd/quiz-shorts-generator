@@ -34,6 +34,12 @@ describe('VideoFFmpegService', () => {
 
     // Test hmsToSeconds where split doesn't return 3 parts
     mockEmitter.stderr.emit('data', 'time=00:05.000\n');
+    mockEmitter.stderr.emit('data', 'time=00:00:10.000\n');
+
+    // Missing block of hms coverage
+    mockEmitter.stderr.emit('data', 'time=00:00:15.000\n'); // branch default missing
+    mockEmitter.stderr.emit('data', 'time=::\n'); // coverage for NaN/undefined handling
+    mockEmitter.stderr.emit('data', 'time=NaN:NaN:NaN\n');
 
     // Simulate exit
     mockEmitter.emit('close', 0);

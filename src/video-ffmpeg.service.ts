@@ -2,11 +2,11 @@ import { spawn } from 'child_process';
 import { normalizePath } from './video-assets.service.js';
 
 const hmsToSeconds = (hms: string): number => {
-  const parts = hms.split(':').map(parseFloat);
-  if (parts.length === 3) {
-    return parts[0]! * 3600 + parts[1]! * 60 + parts[2]!;
-  }
-  return 0;
+  const parts = hms.split(':').reverse().map((p) => parseFloat(p) || 0);
+  const s = parts[0] || 0;
+  const m = parts[1] || 0;
+  const h = parts[2] || 0;
+  return h * 3600 + m * 60 + s;
 };
 
 export const runFFmpeg = async (
