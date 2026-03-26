@@ -98,83 +98,6 @@ describe('TelegramService', () => {
       consoleSpy.mockRestore();
     });
 
-    it('deve engolir try/catch empty no finally se bot.stop throws string', async () => {
-      process.env.TELEGRAM_TOKEN = 'token123';
-      process.env.TELEGRAM_CHAT_ID = 'chat123';
-      mockSendVideo.mockResolvedValueOnce(true);
-      mockStop.mockImplementationOnce(() => { throw 'String error stop' });
-      const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
-
-      const result = await sendVideoToTelegram('video.mp4', 'caption');
-
-      expect(result).toBe(true);
-      expect(mockStop).toHaveBeenCalled();
-      consoleSpy.mockRestore();
-    });
-
-    it('deve tratar exceções no bot.stop na falha sem quebrar', async () => {
-      process.env.TELEGRAM_TOKEN = 'token123';
-      process.env.TELEGRAM_CHAT_ID = 'chat123';
-      mockSendVideo.mockResolvedValueOnce(true);
-      mockStop.mockRejectedValueOnce(new Error('Stop error'));
-      const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
-
-      const result = await sendVideoToTelegram('video.mp4', 'caption');
-
-      expect(result).toBe(true);
-      expect(mockStop).toHaveBeenCalled();
-      expect(consoleSpy).toHaveBeenCalledWith('Erro ao parar o bot:', expect.any(Error));
-      consoleSpy.mockRestore();
-    });
-
-    it('deve ignorar throw vazio do try catch no finally do sendMessageToTelegram', async () => {
-      process.env.TELEGRAM_TOKEN = 'token123';
-      process.env.TELEGRAM_CHAT_ID = 'chat123';
-      mockSendMessage.mockResolvedValueOnce(true);
-      mockStop.mockImplementationOnce(() => {
-        throw 'String err 2';
-      });
-      const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
-
-      const result = await sendMessageToTelegram('msg');
-
-      expect(result).toBe(true);
-      expect(mockStop).toHaveBeenCalled();
-      expect(consoleSpy).toHaveBeenCalledWith('Erro ao parar o bot:', 'String err 2');
-      consoleSpy.mockRestore();
-    });
-
-    it('deve logar falsey error throw in bot.stop of sendVideoToTelegram', async () => {
-      process.env.TELEGRAM_TOKEN = 'token123';
-      process.env.TELEGRAM_CHAT_ID = 'chat123';
-      mockSendVideo.mockResolvedValueOnce(true);
-      mockStop.mockImplementationOnce(() => { throw null; });
-      const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
-
-      const result = await sendVideoToTelegram('video.mp4', 'caption');
-
-      expect(result).toBe(true);
-      expect(mockStop).toHaveBeenCalled();
-      consoleSpy.mockRestore();
-    });
-
-    it('deve ignorar throw vazio do try catch no finally the sendVideoToTelegram se não for error do tipo Error', async () => {
-      process.env.TELEGRAM_TOKEN = 'token123';
-      process.env.TELEGRAM_CHAT_ID = 'chat123';
-      mockSendVideo.mockResolvedValueOnce(true);
-      mockStop.mockImplementationOnce(() => {
-        throw 'String err';
-      });
-      const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
-
-      const result = await sendVideoToTelegram('video.mp4', 'caption');
-
-      expect(result).toBe(true);
-      expect(mockStop).toHaveBeenCalled();
-      expect(consoleSpy).toHaveBeenCalledWith('Erro ao parar o bot:', 'String err');
-      consoleSpy.mockRestore();
-    });
-
     it('deve logar fallback quando erro não tiver error.message na falha do video', async () => {
       process.env.TELEGRAM_TOKEN = 'token123';
       process.env.TELEGRAM_CHAT_ID = 'chat123';
@@ -191,83 +114,60 @@ describe('TelegramService', () => {
       consoleSpy.mockRestore();
     });
 
-    it('deve logar finally vazio se bot.stop() mock não for error instance em sendVideoToTelegram', async () => {
-      process.env.TELEGRAM_TOKEN = 'token123';
-      process.env.TELEGRAM_CHAT_ID = 'chat123';
-      mockSendVideo.mockResolvedValueOnce(true);
-      mockStop.mockImplementationOnce(() => { throw undefined; });
-      const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    describe('bot.stop() error handling', () => {
+      const edgeCases = [
+        { type: 'string', err: 'String error stop' },
+        { type: 'null', err: null },
+        { type: 'undefined', err: undefined },
+        { type: 'false', err: false },
+        { type: 'Error instance', err: new Error('Stop error') }
+      ];
 
-      const result = await sendVideoToTelegram('video.mp4', 'caption');
+      edgeCases.forEach(({ type, err }) => {
+        it(`deve tratar exceção no bot.stop (${type}) no sendVideoToTelegram`, async () => {
+          process.env.TELEGRAM_TOKEN = 'token123';
+          process.env.TELEGRAM_CHAT_ID = 'chat123';
+          mockSendVideo.mockResolvedValueOnce(true);
+          mockStop.mockImplementationOnce(() => { throw err; });
 
-      expect(result).toBe(true);
-      expect(mockStop).toHaveBeenCalled();
-      consoleSpy.mockRestore();
-    });
+          const consoleLogSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+          const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
 
-    it('deve logar falsey error throw in bot.stop of sendMessage', async () => {
-      process.env.TELEGRAM_TOKEN = 'token123';
-      process.env.TELEGRAM_CHAT_ID = 'chat123';
-      mockSendMessage.mockResolvedValueOnce(true);
-      mockStop.mockImplementationOnce(() => { throw false; });
-      const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+          const result = await sendVideoToTelegram('video.mp4', 'caption');
 
-      const result = await sendMessageToTelegram('minha msg');
+          expect(result).toBe(true);
+          expect(mockStop).toHaveBeenCalled();
 
-      expect(result).toBe(true);
-      expect(mockStop).toHaveBeenCalled();
-      consoleSpy.mockRestore();
-    });
+          if (err) {
+             expect(consoleErrorSpy).toHaveBeenCalledWith('Erro ao parar o bot:', err);
+          }
 
-    it('deve ignorar throw vazio do try catch no finally the sendMessageToTelegram se não for error do tipo Error', async () => {
-      process.env.TELEGRAM_TOKEN = 'token123';
-      process.env.TELEGRAM_CHAT_ID = 'chat123';
-      mockSendMessage.mockResolvedValueOnce(true);
-      mockStop.mockImplementationOnce(() => {
-        throw 'String err';
+          consoleLogSpy.mockRestore();
+          consoleErrorSpy.mockRestore();
+        });
+
+        it(`deve tratar exceção no bot.stop (${type}) no sendMessageToTelegram`, async () => {
+          process.env.TELEGRAM_TOKEN = 'token123';
+          process.env.TELEGRAM_CHAT_ID = 'chat123';
+          mockSendMessage.mockResolvedValueOnce(true);
+          mockStop.mockImplementationOnce(() => { throw err; });
+
+          const consoleLogSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+          const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+          const result = await sendMessageToTelegram('msg');
+
+          expect(result).toBe(true);
+          expect(mockStop).toHaveBeenCalled();
+
+          if (err) {
+             expect(consoleErrorSpy).toHaveBeenCalledWith('Erro ao parar o bot:', err);
+          }
+
+          consoleLogSpy.mockRestore();
+          consoleErrorSpy.mockRestore();
+        });
       });
-      const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
-
-      const result = await sendMessageToTelegram('msg');
-
-      expect(result).toBe(true);
-      expect(mockStop).toHaveBeenCalled();
-      expect(consoleSpy).toHaveBeenCalledWith('Erro ao parar o bot:', 'String err');
-      consoleSpy.mockRestore();
-    });
-
-    it('deve cobrir a exception do finally se bot.stop falhar em sendMessageToTelegram', async () => {
-      process.env.TELEGRAM_TOKEN = 'token123';
-      process.env.TELEGRAM_CHAT_ID = 'chat123';
-      mockSendMessage.mockResolvedValueOnce(true);
-      mockStop.mockImplementationOnce(() => {
-        throw new Error('Fake stop fail msg');
-      });
-      const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
-
-      const result = await sendMessageToTelegram('minha msg');
-
-      expect(result).toBe(true);
-      expect(mockStop).toHaveBeenCalled();
-      expect(consoleSpy).toHaveBeenCalledWith('Erro ao parar o bot:', expect.any(Error));
-      consoleSpy.mockRestore();
-    });
-
-    it('deve cobrir a exception do finally se bot.stop falhar em sendVideoToTelegram', async () => {
-      process.env.TELEGRAM_TOKEN = 'token123';
-      process.env.TELEGRAM_CHAT_ID = 'chat123';
-      mockSendVideo.mockResolvedValueOnce(true);
-      mockStop.mockImplementationOnce(() => {
-        throw new Error('Fake stop fail video');
-      });
-      const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
-
-      const result = await sendVideoToTelegram('video.mp4', 'caption');
-
-      expect(result).toBe(true);
-      expect(mockStop).toHaveBeenCalled();
-      expect(consoleSpy).toHaveBeenCalledWith('Erro ao parar o bot:', expect.any(Error));
-      consoleSpy.mockRestore();
     });
   });
 
