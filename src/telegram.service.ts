@@ -19,6 +19,7 @@ export const sendVideoToTelegram = async (
 
   console.log(`📤 Enviando ${videoPath} para o Telegram...`);
 
+  let success = false;
   try {
     await bot.api.sendVideo(chatId, new InputFile(videoPath), {
       caption: caption,
@@ -26,12 +27,11 @@ export const sendVideoToTelegram = async (
       parse_mode: 'HTML',
     });
     console.log('✅ Vídeo enviado com sucesso!');
-    return true;
+    success = true;
   } catch (error: any) {
     // Mascara o token em qualquer string de erro para segurança
     const errorMessage = (error.message || String(error)).replace(token, '***TOKEN_OCULTO***');
     console.error('❌ Erro ao enviar para o Telegram:', errorMessage);
-    return false;
   } finally {
     // clean up bot internals (HTTP agent) even though we didn't start polling
     try {
@@ -40,6 +40,8 @@ export const sendVideoToTelegram = async (
       if (error) console.error('Erro ao parar o bot:', error);
     }
   }
+
+  return success;
 };
 
 export const sendMessageToTelegram = async (
@@ -57,16 +59,16 @@ export const sendMessageToTelegram = async (
 
   console.log(`📤 Enviando mensagem de texto para o Telegram...`);
 
+  let success = false;
   try {
     await bot.api.sendMessage(chatId, message, {
       parse_mode: 'HTML'
     });
     console.log('✅ Mensagem enviada com sucesso!');
-    return true;
+    success = true;
   } catch (error: any) {
     const errorMessage = (error.message || String(error)).replace(token, '***TOKEN_OCULTO***');
     console.error('❌ Erro ao enviar mensagem para o Telegram:', errorMessage);
-    return false;
   } finally {
     try {
       await bot.stop();
@@ -74,4 +76,6 @@ export const sendMessageToTelegram = async (
       if (error) console.error('Erro ao parar o bot:', error);
     }
   }
+
+  return success;
 };
