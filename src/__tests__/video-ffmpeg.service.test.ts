@@ -40,6 +40,9 @@ describe('VideoFFmpegService', () => {
     mockEmitter.stderr.emit('data', 'time=00:00:15.000\n'); // branch default missing
     mockEmitter.stderr.emit('data', 'time=::\n'); // coverage for NaN/undefined handling
     mockEmitter.stderr.emit('data', 'time=NaN:NaN:NaN\n');
+    mockEmitter.stderr.emit('data', 'time=0\n');
+    mockEmitter.stderr.emit('data', 'time=abc:def:ghi\n');
+    mockEmitter.stderr.emit('data', 'time=00:00:00.000\n');
 
     // Simulate exit
     mockEmitter.emit('close', 0);
