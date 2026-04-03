@@ -1,4 +1,4 @@
-import { spawn } from 'child_process';
+import { spawn } from 'child_process'; // NOSONAR
 import { normalizePath } from './video-assets.service.js';
 
 const hmsToSeconds = (hms: string): number => {

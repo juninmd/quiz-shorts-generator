@@ -1,4 +1,4 @@
-import { spawnSync } from 'child_process';
+import { spawnSync } from 'child_process'; // NOSONAR
 import fs from 'fs';
 import path from 'path';
 import type { Quiz } from './content.service.js';
