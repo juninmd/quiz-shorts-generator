@@ -9,20 +9,24 @@ vi.mock('../video-assets.service.js', () => ({
 }));
 
 describe('VideoFFmpegService', () => {
+  let mockEmitter: any;
+  let consoleLog: any;
+  let stdoutWrite: any;
+
   beforeEach(() => {
     vi.clearAllMocks();
-  });
-
-  it('deve logar progresso e resolver no sucesso', async () => {
-    const mockEmitter = new EventEmitter() as any;
+    mockEmitter = new EventEmitter();
     mockEmitter.stderr = new EventEmitter();
-
     vi.mocked(child_process.spawn).mockReturnValue(mockEmitter);
 
-    const consoleLog = vi.spyOn(console, 'log').mockImplementation(() => {});
-    const stdoutWrite = vi.spyOn(process.stdout, 'write').mockImplementation(() => true);
+    consoleLog = vi.spyOn(console, 'log').mockImplementation(() => {});
+    stdoutWrite = vi.spyOn(process.stdout, 'write').mockImplementation(() => true);
+  });
 
-    const promise = runFFmpeg(['-i', 'a.mp4'], 'filter', 'out.mp4', 10);
+  const runPromise = () => runFFmpeg(['-i', 'a.mp4'], 'filter', 'out.mp4', 10);
+
+  it('deve logar progresso e resolver no sucesso', async () => {
+    const promise = runPromise();
 
     // Simulate progress updates
     mockEmitter.stderr.emit('data', 'Input #0\n');
@@ -59,15 +63,7 @@ describe('VideoFFmpegService', () => {
   });
 
   it('deve rejeitar se o processo do ffmpeg fechar com código de erro', async () => {
-    const mockEmitter = new EventEmitter() as any;
-    mockEmitter.stderr = new EventEmitter();
-
-    vi.mocked(child_process.spawn).mockReturnValue(mockEmitter);
-
-    const consoleLog = vi.spyOn(console, 'log').mockImplementation(() => {});
-    const stdoutWrite = vi.spyOn(process.stdout, 'write').mockImplementation(() => true);
-
-    const promise = runFFmpeg(['-i', 'a.mp4'], 'filter', 'out.mp4', 10);
+    const promise = runPromise();
 
     // Simulate exit with error code
     mockEmitter.emit('close', 1);
@@ -81,15 +77,7 @@ describe('VideoFFmpegService', () => {
   it('deve logar progressão do keepAlive setInterval se for acionado', async () => {
     vi.useFakeTimers();
 
-    const mockEmitter = new EventEmitter() as any;
-    mockEmitter.stderr = new EventEmitter();
-
-    vi.mocked(child_process.spawn).mockReturnValue(mockEmitter);
-
-    const consoleLog = vi.spyOn(console, 'log').mockImplementation(() => {});
-    const stdoutWrite = vi.spyOn(process.stdout, 'write').mockImplementation(() => true);
-
-    const promise = runFFmpeg(['-i', 'a.mp4'], 'filter', 'out.mp4', 10);
+    const promise = runPromise();
 
     // Advance timers to trigger keepAlive
     vi.advanceTimersByTime(5 * 60 * 1000 + 100);

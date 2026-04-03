@@ -170,15 +170,24 @@ describe('YouTubeService', () => {
       logSpy.mockRestore();
     });
 
-    it('deve retornar nulo e mascarar as credenciais se der erro', async () => {
+    it.each([
+      {
+        name: 'deve retornar nulo e mascarar as credenciais em caso de Erro instance',
+        errMock: new Error('Failed with meu_id, meu_secret, and meu_token'),
+        expectedMsg: 'Failed with ***CLIENT_ID_OCULTO***, ***CLIENT_SECRET_OCULTO***, and ***REFRESH_TOKEN_OCULTO***'
+      },
+      {
+        name: 'deve tratar fallback caso o erro seja string pura e falte alguma chave',
+        errMock: 'Error str meu_id meu_secret',
+        expectedMsg: 'Error str ***CLIENT_ID_OCULTO*** ***CLIENT_SECRET_OCULTO***'
+      }
+    ])('$name', async ({ errMock, expectedMsg }) => {
       process.env.ENABLE_YOUTUBE = 'true';
       process.env.YOUTUBE_CLIENT_ID = 'meu_id';
       process.env.YOUTUBE_CLIENT_SECRET = 'meu_secret';
       process.env.YOUTUBE_REFRESH_TOKEN = 'meu_token';
 
-      mockVideosInsert.mockRejectedValueOnce(
-        new Error('Failed with meu_id, meu_secret, and meu_token')
-      );
+      mockVideosInsert.mockRejectedValueOnce(errMock);
 
       const errSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
       const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
@@ -186,34 +195,7 @@ describe('YouTubeService', () => {
       const res = await uploadToYouTube('v.mp4', 't', 'd');
 
       expect(res).toBeNull();
-      expect(errSpy).toHaveBeenCalledWith(
-        '❌ Erro ao enviar para o YouTube:',
-        'Failed with ***CLIENT_ID_OCULTO***, ***CLIENT_SECRET_OCULTO***, and ***REFRESH_TOKEN_OCULTO***'
-      );
-
-      errSpy.mockRestore();
-      logSpy.mockRestore();
-    });
-
-    it('deve tratar fallback caso o erro seja string pura e falte alguma chave', async () => {
-      process.env.ENABLE_YOUTUBE = 'true';
-      process.env.YOUTUBE_CLIENT_ID = 'meu_id';
-      process.env.YOUTUBE_CLIENT_SECRET = 'meu_secret';
-      process.env.YOUTUBE_REFRESH_TOKEN = 'meu_token';
-
-      // Override just for validation passing, but we will "simulate" the error logic manually in string format
-      mockVideosInsert.mockRejectedValueOnce('Error str meu_id meu_secret');
-
-      const errSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
-      const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
-
-      const res = await uploadToYouTube('v.mp4', 't', 'd');
-      expect(res).toBeNull();
-
-      expect(errSpy).toHaveBeenCalledWith(
-        '❌ Erro ao enviar para o YouTube:',
-        'Error str ***CLIENT_ID_OCULTO*** ***CLIENT_SECRET_OCULTO***'
-      );
+      expect(errSpy).toHaveBeenCalledWith('❌ Erro ao enviar para o YouTube:', expectedMsg);
 
       errSpy.mockRestore();
       logSpy.mockRestore();

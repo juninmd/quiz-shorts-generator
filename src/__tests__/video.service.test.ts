@@ -66,39 +66,48 @@ describe('VideoService', () => {
     logSpy.mockRestore();
   });
 
-  it('deve montar video sem musica se pasta nao existir ou vazia', async () => {
+  it.each([
+    {
+      name: 'montar video sem musica se pasta nao existir ou vazia',
+      hasMusic: false,
+      throws: false,
+      expectedResult: 'out.mp4'
+    },
+    {
+      name: 'logar e relançar erro se montagem falhar',
+      hasMusic: true,
+      throws: true,
+      expectedResult: 'ffprobe crash'
+    }
+  ])('deve $name', async ({ hasMusic, throws, expectedResult }) => {
     vi.mocked(fs.existsSync).mockImplementation((p: any) => {
       const sp = String(p);
-      if (sp.includes('music')) return false; // pasta não existe
+      if (sp.includes('music')) return hasMusic;
       return true;
     });
 
-    vi.mocked(child_process.spawnSync).mockReturnValue({
-      stdout: Buffer.from('2.0\n')
-    } as any);
+    if (throws) {
+      vi.mocked(child_process.spawnSync).mockImplementation(() => {
+        throw new Error(expectedResult);
+      });
+    } else {
+      vi.mocked(child_process.spawnSync).mockReturnValue({
+        stdout: Buffer.from('2.0\n')
+      } as any);
+    }
 
     const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
-
-    const out = await assembleVideo(quizBase, audioData, 'out.mp4');
-    expect(out).toBe('out.mp4');
-
-    logSpy.mockRestore();
-  });
-
-  it('deve logar e relançar erro se montagem falhar', async () => {
-    vi.mocked(fs.existsSync).mockReturnValue(true);
-    vi.mocked(child_process.spawnSync).mockImplementation(() => {
-      throw new Error('ffprobe crash');
-    });
-
     const errSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
-    const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
 
-    await expect(assembleVideo(quizBase, audioData)).rejects.toThrow('ffprobe crash');
+    if (throws) {
+      await expect(assembleVideo(quizBase, audioData)).rejects.toThrow(expectedResult);
+      expect(errSpy).toHaveBeenCalledWith('❌ Erro na montagem do vídeo:', expectedResult);
+    } else {
+      const out = await assembleVideo(quizBase, audioData, 'out.mp4');
+      expect(out).toBe(expectedResult);
+    }
 
-    expect(errSpy).toHaveBeenCalledWith('❌ Erro na montagem do vídeo:', 'ffprobe crash');
-
-    errSpy.mockRestore();
     logSpy.mockRestore();
+    errSpy.mockRestore();
   });
 });
