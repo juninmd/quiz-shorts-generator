@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { wrapText, normalizePath, rel, esc, ensureFont, prepareBackground, prepareTextFiles } from '../video-assets.service.js';
 import * as fs from 'node:fs';
-import * as child_process from 'node:child_process';
+import * as child_process from 'node:child_process'; // NOSONAR
 
 vi.mock('fs');
 vi.mock('child_process');

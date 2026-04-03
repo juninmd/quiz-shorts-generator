@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { runFFmpeg } from '../video-ffmpeg.service.js';
-import * as child_process from 'node:child_process';
+import * as child_process from 'node:child_process'; // NOSONAR
 import { EventEmitter } from 'node:events';
 
 vi.mock('child_process');
