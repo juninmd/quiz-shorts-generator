@@ -112,22 +112,18 @@ InvalidTimeFormat`;
     consoleSpy.mockRestore();
   });
 
-  it('deve lançar erro se spawnSync retornar propriedade error', async () => {
+  it.each([
+    {
+      name: 'retornar propriedade error',
+      spawnResult: { error: new Error('Command failed') }
+    },
+    {
+      name: 'retornar status diferente de 0',
+      spawnResult: { status: 1, stderr: 'Python not found' }
+    }
+  ])('deve lançar erro se spawnSync $name', async ({ spawnResult }) => {
     vi.mocked(fs.existsSync).mockReturnValue(true);
-    vi.mocked(child_process.spawnSync).mockReturnValue({ error: new Error('Command failed') } as any);
-
-    const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
-    const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
-
-    await expect(generateNarration('teste', 'file')).rejects.toThrow('Falha na narração via edge-tts.');
-
-    consoleSpy.mockRestore();
-    logSpy.mockRestore();
-  });
-
-  it('deve lançar erro se spawnSync retornar status diferente de 0', async () => {
-    vi.mocked(fs.existsSync).mockReturnValue(true);
-    vi.mocked(child_process.spawnSync).mockReturnValue({ status: 1, stderr: 'Python not found' } as any);
+    vi.mocked(child_process.spawnSync).mockReturnValue(spawnResult as any);
 
     const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
