@@ -12,8 +12,19 @@ describe('TTSService', () => {
     vi.clearAllMocks();
   });
 
-  it('deve criar a pasta temp_assets caso nao exista', async () => {
-    vi.mocked(fs.existsSync).mockReturnValue(false);
+  it.each([
+    {
+      name: 'deve criar a pasta temp_assets caso nao exista',
+      exists: false,
+      expectedToCreate: true
+    },
+    {
+      name: 'nao deve tentar criar pasta se ja existir',
+      exists: true,
+      expectedToCreate: false
+    }
+  ])('$name', async ({ exists, expectedToCreate }) => {
+    vi.mocked(fs.existsSync).mockReturnValue(exists);
     vi.mocked(child_process.spawnSync).mockReturnValue({ status: 0, error: undefined } as any);
     vi.mocked(fs.readFileSync).mockReturnValue('');
 
@@ -21,20 +32,11 @@ describe('TTSService', () => {
 
     await generateNarration('teste', 'file');
 
-    expect(fs.mkdirSync).toHaveBeenCalledWith('temp_assets', { recursive: true });
-    consoleSpy.mockRestore();
-  });
-
-  it('nao deve tentar criar pasta se ja existir', async () => {
-    vi.mocked(fs.existsSync).mockReturnValue(true);
-    vi.mocked(child_process.spawnSync).mockReturnValue({ status: 0, error: undefined } as any);
-    vi.mocked(fs.readFileSync).mockReturnValue('');
-
-    const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
-
-    await generateNarration('teste', 'file');
-
-    expect(fs.mkdirSync).not.toHaveBeenCalled();
+    if (expectedToCreate) {
+      expect(fs.mkdirSync).toHaveBeenCalledWith('temp_assets', { recursive: true });
+    } else {
+      expect(fs.mkdirSync).not.toHaveBeenCalled();
+    }
     consoleSpy.mockRestore();
   });
 
