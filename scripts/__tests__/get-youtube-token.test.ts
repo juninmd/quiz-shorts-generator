@@ -1,14 +1,15 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
 describe('get-youtube-token test', () => {
-  let exitMock: any;
-  let consoleErrorMock: any;
-  let consoleLogMock: any;
+  let exitMock: vi.SpyInstance;
+  let consoleErrorMock: vi.SpyInstance;
+  let consoleLogMock: vi.SpyInstance;
   let processEnvBackup: NodeJS.ProcessEnv;
   let mockServer: any;
   let oauth2ClientMock: any;
 
   beforeEach(() => {
+    vi.doMock('dotenv', () => ({ default: { config: vi.fn() } }));
     vi.resetModules();
     vi.clearAllMocks();
     processEnvBackup = { ...process.env };
