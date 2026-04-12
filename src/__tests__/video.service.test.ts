@@ -56,7 +56,7 @@ describe('VideoService', () => {
       stdout: Buffer.from('5.0\n')
     } as any);
 
-    const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {}); // NOSONAR
 
     const out = await assembleVideo(quizBase, audioData, 'out.mp4');
     expect(out).toBe('out.mp4');
@@ -96,8 +96,8 @@ describe('VideoService', () => {
       } as any);
     }
 
-    const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
-    const errSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {}); // NOSONAR
+    const errSpy = vi.spyOn(console, 'error').mockImplementation(() => {}); // NOSONAR
 
     if (throws) {
       await expect(assembleVideo(quizBase, audioData)).rejects.toThrow(expectedResult);

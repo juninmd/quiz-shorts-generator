@@ -125,7 +125,7 @@ Espero que goste!`
     chatMock.mockRejectedValueOnce(new Error('Network Error'));
 
     // Silencia console.error para este teste
-    const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {}); // NOSONAR
 
     await expect(generateQuiz()).rejects.toThrow('Falha na geração de conteúdo via Ollama.');
     expect(consoleSpy).toHaveBeenCalledWith('❌ Erro no processamento do conteúdo Ollama:', 'Network Error');
@@ -147,7 +147,7 @@ Espero que goste!`
       }
     });
 
-    const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {}); // NOSONAR
 
     await expect(generateQuiz()).rejects.toThrow('Falha na geração de conteúdo via Ollama.');
 
@@ -160,7 +160,7 @@ Espero que goste!`
   it('deve lançar erro e logar o fallback do erro (quando error.message for nulo)', async () => {
     chatMock.mockRejectedValueOnce('Apenas uma string');
 
-    const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {}); // NOSONAR
 
     await expect(generateQuiz()).rejects.toThrow('Falha na geração de conteúdo via Ollama.');
     expect(consoleSpy).toHaveBeenCalledWith('❌ Erro no processamento do conteúdo Ollama:', 'Apenas uma string');

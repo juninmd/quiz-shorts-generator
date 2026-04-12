@@ -19,7 +19,7 @@ describe('VideoFFmpegService', () => {
     mockEmitter.stderr = new EventEmitter();
     vi.mocked(child_process.spawn).mockReturnValue(mockEmitter);
 
-    consoleLog = vi.spyOn(console, 'log').mockImplementation(() => {});
+    consoleLog = vi.spyOn(console, 'log').mockImplementation(() => {}); // NOSONAR
     stdoutWrite = vi.spyOn(process.stdout, 'write').mockImplementation(() => true);
   });
 

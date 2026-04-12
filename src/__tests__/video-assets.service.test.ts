@@ -82,7 +82,7 @@ describe('VideoAssetsService', () => {
       vi.mocked(fs.copyFileSync).mockImplementation(() => { throw new Error('Permission denied'); });
       Object.defineProperty(process, 'platform', { value: 'win32' });
 
-      const consoleWarn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+      const consoleWarn = vi.spyOn(console, 'warn').mockImplementation(() => {}); // NOSONAR
       ensureFont();
 
       expect(consoleWarn).toHaveBeenCalledWith(
@@ -117,7 +117,7 @@ describe('VideoAssetsService', () => {
       vi.mocked(fs.existsSync).mockReturnValue(false); // nada existe
       Object.defineProperty(process, 'platform', { value: 'linux' });
 
-      const consoleWarn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+      const consoleWarn = vi.spyOn(console, 'warn').mockImplementation(() => {}); // NOSONAR
       ensureFont();
 
       expect(consoleWarn).toHaveBeenCalledWith('⚠️ Não foi possível copiar automaticamente a fonte Arial.');

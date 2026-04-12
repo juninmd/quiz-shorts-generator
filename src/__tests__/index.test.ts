@@ -17,7 +17,7 @@ vi.mock('../youtube.service.js');
 vi.mock('fs');
 
 // We have to mock process.exit
-const mockExit = vi.spyOn(process, 'exit').mockImplementation((() => {}) as never);
+const mockExit = vi.spyOn(process, 'exit').mockImplementation((() => {}) as never); // NOSONAR
 
 describe('Index (Main Execution Loop)', () => {
   const originalEnv = process.env;
@@ -114,7 +114,7 @@ describe('Index (Main Execution Loop)', () => {
     setupMocks('false', true, false);
     vi.mocked(generateQuiz).mockRejectedValueOnce(new Error('Fatal Error'));
 
-    const errSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const errSpy = vi.spyOn(console, 'error').mockImplementation(() => {}); // NOSONAR
 
     vi.resetModules();
     await import('../index.js');

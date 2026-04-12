@@ -47,7 +47,7 @@ describe('TelegramService', () => {
         process.env.TELEGRAM_TOKEN = 'token';
         delete process.env.TELEGRAM_CHAT_ID;
       }
-      const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+      const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {}); // NOSONAR
       const result = await method();
       expect(result).toBe(false);
       expect(consoleSpy).toHaveBeenCalledWith('Erro: TELEGRAM_TOKEN ou TELEGRAM_CHAT_ID não configurados no .env');
@@ -64,7 +64,7 @@ describe('TelegramService', () => {
     it('deve enviar o vídeo com sucesso e retornar true', async () => {
       mockSendVideo.mockResolvedValueOnce(true);
       mockStop.mockResolvedValueOnce(true);
-      const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+      const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {}); // NOSONAR
 
       const result = await sendVideoToTelegram('video.mp4', 'caption');
 
@@ -80,7 +80,7 @@ describe('TelegramService', () => {
 
     it('deve enviar a mensagem com sucesso e retornar true', async () => {
       mockSendMessage.mockResolvedValueOnce(true);
-      const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+      const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {}); // NOSONAR
 
       const result = await sendMessageToTelegram('minha msg');
 
@@ -134,7 +134,7 @@ describe('TelegramService', () => {
       }
     ])('deve retornar false e mascarar erro em $name', async ({ err, method, mockFn, prefix, expectedMsg }) => {
       mockFn.mockRejectedValueOnce(err);
-      const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+      const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {}); // NOSONAR
 
       const result = await method();
 
@@ -162,8 +162,8 @@ describe('TelegramService', () => {
         mockSendVideo.mockResolvedValueOnce(true);
         mockStop.mockImplementationOnce(() => { throw err; });
 
-        const consoleLogSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
-        const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+        const consoleLogSpy = vi.spyOn(console, 'log').mockImplementation(() => {}); // NOSONAR
+        const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {}); // NOSONAR
 
         const resVideo = await sendVideoToTelegram('video.mp4', 'caption');
         expect(resVideo).toBe(true);

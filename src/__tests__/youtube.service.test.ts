@@ -117,7 +117,7 @@ describe('YouTubeService', () => {
       process.env.ENABLE_YOUTUBE = 'true';
       chatMock.mockRejectedValueOnce(new Error('Network Err'));
 
-      const errSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+      const errSpy = vi.spyOn(console, 'error').mockImplementation(() => {}); // NOSONAR
 
       const res = await generateYoutubeMetadata(quizBase);
 
@@ -131,7 +131,7 @@ describe('YouTubeService', () => {
   describe('uploadToYouTube', () => {
     it('deve pular se ENABLE_YOUTUBE for false', async () => {
       process.env.ENABLE_YOUTUBE = 'false';
-      const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+      const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {}); // NOSONAR
 
       const res = await uploadToYouTube('v.mp4', 't', 'd');
       expect(res).toBeNull();
@@ -144,7 +144,7 @@ describe('YouTubeService', () => {
       process.env.ENABLE_YOUTUBE = 'true';
       delete process.env.YOUTUBE_CLIENT_ID;
 
-      const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+      const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {}); // NOSONAR
 
       const res = await uploadToYouTube('v.mp4', 't', 'd');
       expect(res).toBeNull();
@@ -162,7 +162,7 @@ describe('YouTubeService', () => {
       vi.mocked(fs.createReadStream).mockReturnValue('stream' as any);
       mockVideosInsert.mockResolvedValueOnce({ data: { id: 'yt123' } });
 
-      const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+      const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {}); // NOSONAR
 
       const res = await uploadToYouTube('v.mp4', 't', 'd');
       expect(res).toBe('https://youtube.com/shorts/yt123');
@@ -189,8 +189,8 @@ describe('YouTubeService', () => {
 
       mockVideosInsert.mockRejectedValueOnce(errMock);
 
-      const errSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
-      const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+      const errSpy = vi.spyOn(console, 'error').mockImplementation(() => {}); // NOSONAR
+      const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {}); // NOSONAR
 
       const res = await uploadToYouTube('v.mp4', 't', 'd');
 
