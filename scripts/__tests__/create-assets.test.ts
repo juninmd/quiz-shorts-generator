@@ -1,9 +1,9 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
 describe('create-assets test', () => {
-  let exitMock: any;
-  let consoleLogMock: any;
-  let consoleErrorMock: any;
+  let exitMock: vi.SpyInstance;
+  let consoleLogMock: vi.SpyInstance;
+  let consoleErrorMock: vi.SpyInstance;
 
   beforeEach(() => {
     vi.resetModules();
