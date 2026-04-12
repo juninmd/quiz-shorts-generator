@@ -27,7 +27,7 @@ describe('get-youtube-token test', () => {
     delete process.env.YOUTUBE_CLIENT_ID;
     delete process.env.YOUTUBE_CLIENT_SECRET;
 
-    await import('../get-youtube-token.js');
+    await import('../get-youtube-token.js'); // NOSONAR
     expect(consoleErrorMock).toHaveBeenCalled();
     expect(exitMock).toHaveBeenCalledWith(1);
   });
@@ -77,7 +77,7 @@ describe('get-youtube-token test', () => {
         }
       }));
 
-      await import('../get-youtube-token.js');
+      await import('../get-youtube-token.js'); // NOSONAR
 
       return { serverHandler, writeHeadMock, endMock, closeMock };
     };
