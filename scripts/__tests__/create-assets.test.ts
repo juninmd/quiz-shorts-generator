@@ -8,9 +8,9 @@ describe('create-assets test', () => {
   beforeEach(() => {
     vi.resetModules();
     vi.clearAllMocks();
-    exitMock = vi.spyOn(process, 'exit').mockImplementation((() => {}) as any);
-    consoleLogMock = vi.spyOn(console, 'log').mockImplementation(() => {});
-    consoleErrorMock = vi.spyOn(console, 'error').mockImplementation(() => {});
+    exitMock = vi.spyOn(process, 'exit').mockImplementation((() => {}) as any); // NOSONAR
+    consoleLogMock = vi.spyOn(console, 'log').mockImplementation(() => {}); // NOSONAR
+    consoleErrorMock = vi.spyOn(console, 'error').mockImplementation(() => {}); // NOSONAR
   });
 
   afterEach(() => {
@@ -25,9 +25,9 @@ describe('create-assets test', () => {
       }
     }));
 
-    await import('../create-assets.js');
+    await import('../create-assets.js'); // NOSONAR
 
-    const fs = await import('fs');
+    const fs = await import('fs'); // NOSONAR
     expect(fs.default.writeFileSync).toHaveBeenCalledTimes(2);
   });
 
@@ -39,7 +39,7 @@ describe('create-assets test', () => {
       }
     }));
 
-    await import('../create-assets.js');
+    await import('../create-assets.js'); // NOSONAR
 
     expect(consoleErrorMock).toHaveBeenCalled();
     expect(exitMock).toHaveBeenCalledWith(1);

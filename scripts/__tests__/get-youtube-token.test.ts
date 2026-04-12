@@ -13,9 +13,9 @@ describe('get-youtube-token test', () => {
     vi.clearAllMocks();
     processEnvBackup = { ...process.env };
 
-    exitMock = vi.spyOn(process, 'exit').mockImplementation((() => {}) as any);
-    consoleErrorMock = vi.spyOn(console, 'error').mockImplementation(() => {});
-    consoleLogMock = vi.spyOn(console, 'log').mockImplementation(() => {});
+    exitMock = vi.spyOn(process, 'exit').mockImplementation((() => {}) as any); // NOSONAR
+    consoleErrorMock = vi.spyOn(console, 'error').mockImplementation(() => {}); // NOSONAR
+    consoleLogMock = vi.spyOn(console, 'log').mockImplementation(() => {}); // NOSONAR
   });
 
   afterEach(() => {
@@ -39,7 +39,7 @@ describe('get-youtube-token test', () => {
 
       const writeHeadMock = vi.fn();
       const endMock = vi.fn();
-      const closeMock = vi.fn((cb) => cb && cb());
+      const closeMock = vi.fn((cb) => cb && cb()); // NOSONAR
 
       mockServer = {
         listen: vi.fn(),
