@@ -32,8 +32,9 @@ describe('create-assets.ts', () => {
   it('deve criar os assets de audio com sucesso', async () => {
     await import('../create-assets.js');
 
-    expect(fs.mkdirSync).toHaveBeenCalledTimes(2);
-    expect(fs.writeFileSync).toHaveBeenCalledTimes(2);
+    expect(fs.mkdirSync).toHaveBeenCalledWith(expect.stringContaining('music'), { recursive: true });
+    expect(fs.writeFileSync).toHaveBeenCalledWith(expect.stringContaining('background.mp3'), expect.anything());
+    expect(fs.writeFileSync).toHaveBeenCalledWith(expect.stringContaining('beep.mp3'), expect.anything());
     expect(consoleLogSpy).toHaveBeenCalledWith('📦 Criando arquivos de mídia...');
     expect(consoleLogSpy).toHaveBeenCalledWith('✅ background.mp3 criado');
     expect(consoleLogSpy).toHaveBeenCalledWith('✅ beep.mp3 criado');
