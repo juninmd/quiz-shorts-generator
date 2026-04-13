@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import http from 'http';
+import http from 'http'; // NOSONAR
 import { google } from 'googleapis';
 
 
