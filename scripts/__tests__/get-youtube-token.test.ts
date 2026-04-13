@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import http from 'http';
 import { google } from 'googleapis';
-import url from 'url';
+
 
 vi.mock('googleapis', () => {
   const oauth2Client = {
@@ -79,7 +79,7 @@ describe('get-youtube-token.ts', () => {
       process.env.YOUTUBE_CLIENT_SECRET = 'test_secret';
 
       await import('../get-youtube-token.js');
-      requestHandler = vi.mocked(http.createServer).mock.calls[0][0];
+      requestHandler = vi.mocked(http.createServer).mock.calls[0]![0];
 
       mockRes = {
         writeHead: vi.fn(),
