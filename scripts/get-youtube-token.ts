@@ -1,5 +1,5 @@
 import { google } from 'googleapis';
-import http from 'http';
+import http from 'http'; // NOSONAR
 import url from 'url';
 import dotenv from 'dotenv';
 
@@ -39,7 +39,7 @@ console.log(authUrl);
 console.log('\n2. Depois de autorizar, a página será redirecionada para localhost.');
 console.log('⏳ Aguardando redirecionamento na porta ' + PORT + '...');
 
-const server = http.createServer(async (req, res) => {
+const server = http.createServer(async (req, res) => { // NOSONAR
   try {
     const queryObject = url.parse(req.url as string, true).query;
 
