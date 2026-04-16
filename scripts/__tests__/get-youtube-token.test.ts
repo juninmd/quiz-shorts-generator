@@ -105,77 +105,59 @@ describe('get-youtube-token.ts', () => {
     expect(processExitSpy).toHaveBeenCalledWith(0);
   });
 
-  it('deve retornar 400 se o codigo nao for fornecido', async () => {
-    process.env.YOUTUBE_CLIENT_ID = 'mock_client_id';
-    process.env.YOUTUBE_CLIENT_SECRET = 'mock_client_secret';
-
+  describe('http.createServer routes', () => {
     let serverHandler: any;
+    let req: any;
+    let res: any;
 
-    const mockServer = {
-      listen: vi.fn(),
-      close: vi.fn(),
-    };
+    beforeEach(async () => {
+      process.env.YOUTUBE_CLIENT_ID = 'mock_client_id';
+      process.env.YOUTUBE_CLIENT_SECRET = 'mock_client_secret';
 
-    vi.spyOn(http, 'createServer').mockImplementation(((handler: any) => {
-      serverHandler = handler;
-      return mockServer;
-    }) as any);
+      const mockServer = {
+        listen: vi.fn(),
+        close: vi.fn(),
+      };
 
-    // supress console.log of auth url
-    vi.spyOn(console, 'log').mockImplementation(() => {});
+      vi.spyOn(http, 'createServer').mockImplementation(((handler: any) => {
+        serverHandler = handler;
+        return mockServer;
+      }) as any);
 
-    await import('../get-youtube-token.js');
+      vi.spyOn(console, 'log').mockImplementation(() => {});
 
-    const req = { url: '/callback' }; // no code
-    const res = {
-      writeHead: vi.fn(),
-      end: vi.fn(),
-    };
+      await import('../get-youtube-token.js');
 
-    await serverHandler(req, res);
-
-    expect(res.writeHead).toHaveBeenCalledWith(400, { 'Content-Type': 'text/plain' });
-    expect(res.end).toHaveBeenCalledWith('Código não encontrado na URL.');
-  });
-
-  it('deve retornar 500 se ocorrer um erro inesperado', async () => {
-    process.env.YOUTUBE_CLIENT_ID = 'mock_client_id';
-    process.env.YOUTUBE_CLIENT_SECRET = 'mock_client_secret';
-
-    let serverHandler: any;
-
-    const mockServer = {
-      listen: vi.fn(),
-      close: vi.fn(),
-    };
-
-    vi.spyOn(http, 'createServer').mockImplementation(((handler: any) => {
-      serverHandler = handler;
-      return mockServer;
-    }) as any);
-
-    // supress console logs
-    vi.spyOn(console, 'log').mockImplementation(() => {});
-    const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
-
-    await import('../get-youtube-token.js');
-
-    const req = { url: '/callback?code=mock_code' };
-    const res = {
-      writeHead: vi.fn(),
-      end: vi.fn(),
-    };
-
-    // modify url.parse to throw an error to simulate unexpected failure
-    const url = require('url');
-    vi.spyOn(url, 'parse').mockImplementation(() => {
-        throw new Error('Unexpected error');
+      res = {
+        writeHead: vi.fn(),
+        end: vi.fn(),
+      };
     });
 
-    await serverHandler(req, res);
+    it('deve retornar 400 se o codigo nao for fornecido', async () => {
+      req = { url: '/callback' }; // no code
 
-    expect(consoleErrorSpy).toHaveBeenCalledWith('❌ Erro inesperado:', expect.any(Error));
-    expect(res.writeHead).toHaveBeenCalledWith(500, { 'Content-Type': 'text/plain' });
-    expect(res.end).toHaveBeenCalledWith('Ocorreu um erro.');
+      await serverHandler(req, res);
+
+      expect(res.writeHead).toHaveBeenCalledWith(400, { 'Content-Type': 'text/plain' });
+      expect(res.end).toHaveBeenCalledWith('Código não encontrado na URL.');
+    });
+
+    it('deve retornar 500 se ocorrer um erro inesperado', async () => {
+      req = { url: '/callback?code=mock_code' };
+      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+      // modify url.parse to throw an error to simulate unexpected failure
+      const url = require('url');
+      vi.spyOn(url, 'parse').mockImplementation(() => {
+          throw new Error('Unexpected error');
+      });
+
+      await serverHandler(req, res);
+
+      expect(consoleErrorSpy).toHaveBeenCalledWith('❌ Erro inesperado:', expect.any(Error));
+      expect(res.writeHead).toHaveBeenCalledWith(500, { 'Content-Type': 'text/plain' });
+      expect(res.end).toHaveBeenCalledWith('Ocorreu um erro.');
+    });
   });
 });
