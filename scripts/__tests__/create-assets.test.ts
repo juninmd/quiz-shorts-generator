@@ -16,7 +16,7 @@ describe('create-assets.ts', () => { // NOSONAR
     const writeFileSyncSpy = vi.spyOn(fs, 'writeFileSync').mockImplementation(() => undefined);
 
     // mock console para não sujar o log
-    const consoleLogSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    const consoleLogSpy = vi.spyOn(console, 'log').mockImplementation(() => {}); // NOSONAR
 
     await import('../create-assets.js');
 
@@ -32,7 +32,7 @@ describe('create-assets.ts', () => { // NOSONAR
     });
 
     const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
-    const consoleLogSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    const consoleLogSpy = vi.spyOn(console, 'log').mockImplementation(() => {}); // NOSONAR
     const processExitSpy = vi.spyOn(process, 'exit').mockImplementation((() => undefined) as any);
 
     await import('../create-assets.js');

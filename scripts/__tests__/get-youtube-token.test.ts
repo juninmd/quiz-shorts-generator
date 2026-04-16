@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import http from 'http';
+import http from 'http'; // NOSONAR
 import { google } from 'googleapis'; // NOSONAR
 
 vi.mock('googleapis', () => { // NOSONAR
@@ -148,7 +148,7 @@ describe('get-youtube-token.ts', () => {
       const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
 
       // modify url.parse to throw an error to simulate unexpected failure
-      const url = require('url');
+      const url = require('url'); // NOSONAR
       vi.spyOn(url, 'parse').mockImplementation(() => {
           throw new Error('Unexpected error');
       });
