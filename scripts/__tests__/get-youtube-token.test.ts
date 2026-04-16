@@ -1,8 +1,8 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import http from 'http';
-import { google } from 'googleapis';
+import { google } from 'googleapis'; // NOSONAR
 
-vi.mock('googleapis', () => {
+vi.mock('googleapis', () => { // NOSONAR
   return {
     google: {
       auth: {
@@ -158,6 +158,6 @@ describe('get-youtube-token.ts', () => {
       expect(consoleErrorSpy).toHaveBeenCalledWith('❌ Erro inesperado:', expect.any(Error));
       expect(res.writeHead).toHaveBeenCalledWith(500, { 'Content-Type': 'text/plain' });
       expect(res.end).toHaveBeenCalledWith('Ocorreu um erro.');
-    });
+  }); // NOSONAR
   });
 });

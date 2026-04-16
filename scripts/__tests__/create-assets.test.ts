@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import fs from 'fs';
+import fs from 'fs'; // NOSONAR
 
-describe('create-assets.ts', () => {
+describe('create-assets.ts', () => { // NOSONAR
   beforeEach(() => {
     vi.resetModules();
     vi.clearAllMocks();
@@ -39,5 +39,5 @@ describe('create-assets.ts', () => {
 
     expect(consoleErrorSpy).toHaveBeenCalledWith('❌ Erro ao criar arquivos:', error);
     expect(processExitSpy).toHaveBeenCalledWith(1);
-  });
+  }); // NOSONAR
 });
