@@ -40,11 +40,14 @@ RUN pnpm install --prod --frozen-lockfile
 
 COPY --from=builder /app ./
 
-# Setup folders
-RUN mkdir -p assets/backgrounds assets/music assets/fonts assets/logo temp_assets output
-
+# Setup folders and fix permissions
+RUN mkdir -p assets/backgrounds assets/music assets/fonts assets/logo temp_assets output && \
+    chown -R node:node /app
+    
 # Ensure fonts are available for FFmpeg
 RUN fc-cache -f -v
+
+USER node
 
 ENV NODE_ENV=production
 
