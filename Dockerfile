@@ -6,8 +6,12 @@ WORKDIR /app
 # Install pnpm
 RUN corepack enable && corepack prepare pnpm@latest --activate
 
-# Install build dependencies if needed
-# (None specifically needed for this TS project, but good to have)
+# Install build dependencies
+RUN apt-get update && apt-get install -y \
+    build-essential \
+    git \
+    python3 \
+    && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 COPY package.json pnpm-lock.yaml ./
 RUN pnpm install --frozen-lockfile
