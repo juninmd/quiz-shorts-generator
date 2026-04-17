@@ -1,12 +1,16 @@
-import { Ollama } from 'ollama';
+import { createOllama } from 'ollama-ai-provider';
+import { generateObject } from 'ai';
 import { z } from 'zod';
 import dotenv from 'dotenv';
 
 dotenv.config();
 
-const ollama = new Ollama({
-  host: process.env.OLLAMA_HOST || 'http://localhost:11434'
-});
+const getOllamaClient = () => {
+    const host = process.env.OLLAMA_BASE_URL || process.env.OLLAMA_HOST || 'http://ollama.ai.svc.cluster.local:11434';
+    return createOllama({
+        baseURL: `${host}/api`,
+    });
+};
 
 const quizSchema = z.object({
   tema: z.string(),
@@ -24,66 +28,37 @@ const quizSchema = z.object({
 export type Quiz = z.infer<typeof quizSchema>;
 
 export const generateQuiz = async (): Promise<Quiz> => {
-  const modelName = process.env.OLLAMA_MODEL || 'gemma3:1b';
-  const topics = ['jogos', 'filmes', 'séries', 'animes', 'curiosidades gerais', 'bíblia'];
-  const topic = topics[Math.floor(Math.random() * topics.length)];
+  const modelName = process.env.AI_MODEL || process.env.OLLAMA_MODEL || 'gemma4:e4b';
+  const topics = ['jogos', 'filmes', 'séries', 'animes', 'curiosidades gerais', 'bíblia', 'história', 'ciência'];
+  const topic = topics[Math.floor(Math.random() * topics.length)] || 'geral';
 
-  console.log(`🤖 Usando biblioteca oficial Ollama com modelo: ${modelName}`);
+  console.log(`🤖 Usando AI SDK com Ollama modelo: ${modelName}`);
 
-  const prompt = `Gere um quiz educativo sobre o tema: ${topic}.
-    Seja um verificador de fatos rigoroso.
-    Garanta precisão histórica/técnica e um fato curioso que valide a resposta.
-    Os textos DEVEM ser extremamente curtos e diretos, pois o vídeo terá no máximo 1 minuto de duração padronizada (Shorts).
-    A pergunta deve ter no máximo 40 caracteres.
-    As opções no máximo 15 caracteres cada.
-    O fato curioso deve ter no máximo 60 caracteres.
-    Responda APENAS com um objeto JSON no formato:
-    {
-        "tema": "${topic}",
-        "pergunta": "...",
-        "opcoes": {"A": "...", "B": "...", "C": "...", "D": "..."},
-        "resposta_correta": "A",
-        "fato_curioso": "..."
-    }
-    O texto deve estar em Português do Brasil.`;
+  const systemPrompt = `Você é um gerador de quizzes educativos extremamente rigoroso e preciso.
+    O tema selecionado é: ${topic}.
+    Regras Críticas:
+    1. Verifique os fatos rigorosamente. Sem alucinações.
+    2. Os textos DEVEM ser extremamente curtos e diretos (Shorts).
+    3. Pergunta: máx 45 caracteres.
+    4. Opções: máx 15 caracteres cada.
+    5. Fato curioso: máx 60 caracteres (deve validar a resposta).
+    6. Língua: Português do Brasil.`;
 
   try {
-    const response = await ollama.chat({
-      model: modelName,
-      messages: [{ role: 'user', content: prompt }],
-      format: 'json', // Força o Ollama a responder em JSON
+    const ollama = getOllamaClient();
+    const { object } = await generateObject({
+      model: ollama(modelName),
+      schema: quizSchema,
+      prompt: `Gere um quiz sobre ${topic}.`,
+      system: systemPrompt,
     });
 
-    const content = response.message.content;
+    const quizResult = object as Quiz;
+    if (!quizResult.tema) quizResult.tema = topic;
 
-    // Limpa possíveis blocos de código markdown do JSON
-    let cleanContent = content.trim();
-    if (cleanContent.startsWith('```json')) {
-      cleanContent = cleanContent.substring(7, cleanContent.lastIndexOf('```')).trim();
-    } else if (cleanContent.startsWith('```')) {
-      cleanContent = cleanContent.substring(3, cleanContent.lastIndexOf('```')).trim();
-    }
-
-    // Tenta extrair JSON válido se houver lixo ao redor
-    const jsonMatch = cleanContent.match(/\{[\s\S]*\}/);
-    if (jsonMatch) {
-      cleanContent = jsonMatch[0];
-    }
-
-    const quizData = JSON.parse(cleanContent);
-
-    // Se o tema vier faltando ou vazio (erro comum de modelos menores), preenchemos com o topic selecionado
-    if (!quizData.tema) {
-      quizData.tema = topic;
-    }
-
-    // Valida com Zod
-    return quizSchema.parse(quizData);
+    return quizResult;
   } catch (error: any) {
-    console.error('❌ Erro no processamento do conteúdo Ollama:', error.message || error);
-    if (error.name === 'ZodError') {
-      console.error('Detalhamento da validação:', JSON.stringify(error.errors, null, 2));
-    }
-    throw new Error('Falha na geração de conteúdo via Ollama.');
+    console.error('❌ Erro na geração de conteúdo via AI SDK:', error.message || error);
+    throw new Error(`Falha na geração de conteúdo: ${error.message}`);
   }
 };

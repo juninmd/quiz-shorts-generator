@@ -1,0 +1,24 @@
+name: Build and Push Docker Image
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'src/**'
+      - 'package.json'
+      - 'Dockerfile'
+      - 'pnpm-lock.yaml'
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build and Push to GHCR
+        uses: juninmd/base-actions/docker-build-push@main
+        with:
+          image-name: ${{ github.repository }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
