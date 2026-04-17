@@ -1,7 +1,7 @@
 {
   "name": "quiz-shorts-generator",
   "version": "1.0.0",
-  "description": "Gerador de Quiz Shorts com Node.js/TS, Ollama e Edge-TTS",
+  "description": "Quiz shorts video generator with AI",
   "type": "module",
   "main": "src/index.ts",
   "scripts": {
