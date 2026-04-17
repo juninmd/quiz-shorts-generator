@@ -4,11 +4,6 @@ on:
   push:
     branches:
       - master
-    paths:
-      - 'src/**'
-      - 'package.json'
-      - 'Dockerfile'
-      - 'pnpm-lock.yaml'
   workflow_dispatch:
 
 jobs:
