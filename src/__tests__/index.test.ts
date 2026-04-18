@@ -54,13 +54,17 @@ describe('Index (Main Execution Loop)', () => {
     vi.mocked(fs.existsSync).mockReturnValue(false);
   };
 
+  const executeFlux = async () => {
+    vi.resetModules();
+    await import('../index.js');
+    await new Promise(r => setTimeout(r, 100));
+  };
+
   it('deve executar o fluxo completo sem youtube e sucesso no telegram', async () => {
     setupMocks('false', true, false);
     vi.mocked(fs.existsSync).mockImplementation((p: fs.PathLike) => String(p).includes('temp_assets'));
 
-    vi.resetModules(); // we reset inside the test right before importing
-    await import('../index.js');
-    await new Promise(r => setTimeout(r, 100));
+    await executeFlux();
 
     expect(generateQuiz).toHaveBeenCalled();
     expect(generateNarration).toHaveBeenCalledTimes(2);
@@ -75,9 +79,7 @@ describe('Index (Main Execution Loop)', () => {
     setupMocks('true', true, true);
     vi.mocked(fs.existsSync).mockReturnValue(false);
 
-    vi.resetModules();
-    await import('../index.js');
-    await new Promise(r => setTimeout(r, 100));
+    await executeFlux();
 
     expect(generateYoutubeMetadata).toHaveBeenCalled();
     expect(uploadToYouTube).toHaveBeenCalled();
@@ -89,9 +91,7 @@ describe('Index (Main Execution Loop)', () => {
     setupMocks('true', true, false);
     vi.mocked(fs.existsSync).mockReturnValue(false);
 
-    vi.resetModules();
-    await import('../index.js');
-    await new Promise(r => setTimeout(r, 100));
+    await executeFlux();
 
     expect(uploadToYouTube).toHaveBeenCalled();
     expect(sendMessageToTelegram).not.toHaveBeenCalled(); // Nao repassa link
@@ -102,9 +102,7 @@ describe('Index (Main Execution Loop)', () => {
     setupMocks('false', false, false);
     vi.mocked(fs.existsSync).mockReturnValue(true);
 
-    vi.resetModules();
-    await import('../index.js');
-    await new Promise(r => setTimeout(r, 100));
+    await executeFlux();
 
     expect(mockExit).toHaveBeenCalledWith(1);
     expect(fs.rmSync).not.toHaveBeenCalled(); // Nao limpa se o telegram falhou
@@ -116,13 +114,33 @@ describe('Index (Main Execution Loop)', () => {
 
     const errSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
 
-    vi.resetModules();
-    await import('../index.js');
-    await new Promise(r => setTimeout(r, 100));
+    await executeFlux();
 
     expect(mockExit).toHaveBeenCalledWith(1);
     expect(errSpy).toHaveBeenCalledWith('❌ Erro no processo principal:', expect.any(Error));
 
     errSpy.mockRestore();
+  });
+
+  it('deve executar o catch do main().catch(...) e logar erro fatal', async () => {
+    setupMocks('false', true, false);
+
+    // Forçar que o catch interno dispare uma exceção para cair no catch externo
+    mockExit.mockImplementationOnce(() => {
+      throw new Error('Forced Exit Exception');
+    });
+
+    vi.mocked(generateQuiz).mockRejectedValueOnce(new Error('Fatal Error'));
+
+    const errSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+    await executeFlux();
+
+    expect(errSpy).toHaveBeenCalledWith('💥 CRASH FATAL:', expect.any(Error));
+    expect(mockExit).toHaveBeenCalledWith(1);
+
+    errSpy.mockRestore();
+    // Restaurar mockExit
+    mockExit.mockImplementation((() => {}) as never);
   });
 });

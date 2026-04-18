@@ -54,7 +54,9 @@ export const generateQuiz = async (): Promise<Quiz> => {
     });
 
     const quizResult = object as Quiz;
-    if (!quizResult.tema) quizResult.tema = topic;
+    if (!quizResult.tema) {
+      quizResult.tema = topic;
+    }
 
     return quizResult;
   } catch (error: any) {
