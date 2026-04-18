@@ -17,6 +17,36 @@ describe('ContentService', () => {
     vi.clearAllMocks();
   });
 
+  it('deve usar o tópico default "geral" se a lista de tópicos falhar', async () => {
+    // Math.random sempre retornará 1 para este teste, assim testando o "|| 'geral'" se o array out-of-bounds mockado
+    vi.spyOn(Math, 'random').mockReturnValueOnce(1); // 1 * length = length (out of bounds for array indexing)
+
+    const mockQuiz = {
+      tema: 'geral',
+      pergunta: 'P',
+      opcoes: { A: '1', B: '2', C: '3', D: '4' },
+      resposta_correta: 'A',
+      fato_curioso: 'Fato.'
+    };
+
+    vi.mocked(generateObject).mockResolvedValueOnce({
+      object: mockQuiz,
+      finishReason: 'stop',
+      usage: { promptTokens: 0, completionTokens: 0, totalTokens: 0 },
+      warnings: []
+    } as any);
+
+    const quiz = await generateQuiz();
+    expect(quiz.tema).toBe('geral');
+    expect(generateObject).toHaveBeenCalledWith(
+      expect.objectContaining({
+        prompt: 'Gere um quiz sobre geral.'
+      })
+    );
+
+    vi.restoreAllMocks();
+  });
+
   it('deve gerar um quiz com a estrutura correta usando AI SDK', async () => {
     const mockQuiz = {
       tema: 'jogos',
@@ -61,12 +91,42 @@ describe('ContentService', () => {
     expect(quiz.tema.length).toBeGreaterThan(0);
   });
 
+  it('deve manter o tema se o modelo retornar preenchido', async () => {
+    const mockQuiz = {
+      tema: 'TEMA_PREENCHIDO',
+      pergunta: 'Pergunta?',
+      opcoes: { A: '1', B: '2', C: '3', D: '4' },
+      resposta_correta: 'A',
+      fato_curioso: 'Fato.'
+    };
+
+    vi.mocked(generateObject).mockResolvedValueOnce({
+      object: mockQuiz,
+      finishReason: 'stop',
+      usage: { promptTokens: 0, completionTokens: 0, totalTokens: 0 },
+      warnings: []
+    } as any);
+
+    const quiz = await generateQuiz();
+    expect(quiz.tema).toBe('TEMA_PREENCHIDO');
+  });
+
   it('deve lançar erro se o AI SDK falhar', async () => {
     vi.mocked(generateObject).mockRejectedValueOnce(new Error('AI Error'));
     const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
 
     await expect(generateQuiz()).rejects.toThrow('Falha na geração de conteúdo: AI Error');
     expect(consoleSpy).toHaveBeenCalledWith('❌ Erro na geração de conteúdo via AI SDK:', 'AI Error');
+
+    consoleSpy.mockRestore();
+  });
+
+  it('deve usar o error original se não houver error.message', async () => {
+    vi.mocked(generateObject).mockRejectedValueOnce('String Error');
+    const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+    await expect(generateQuiz()).rejects.toThrow('Falha na geração de conteúdo: undefined');
+    expect(consoleSpy).toHaveBeenCalledWith('❌ Erro na geração de conteúdo via AI SDK:', 'String Error');
 
     consoleSpy.mockRestore();
   });

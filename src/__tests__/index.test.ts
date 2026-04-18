@@ -125,4 +125,28 @@ describe('Index (Main Execution Loop)', () => {
 
     errSpy.mockRestore();
   });
+
+  it('deve executar o catch do main().catch(...) e logar erro fatal', async () => {
+    setupMocks('false', true, false);
+
+    // Forçar que o catch interno dispare uma exceção para cair no catch externo
+    mockExit.mockImplementationOnce(() => {
+      throw new Error('Forced Exit Exception');
+    });
+
+    vi.mocked(generateQuiz).mockRejectedValueOnce(new Error('Fatal Error'));
+
+    const errSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+    vi.resetModules();
+    await import('../index.js');
+    await new Promise(r => setTimeout(r, 100));
+
+    expect(errSpy).toHaveBeenCalledWith('💥 CRASH FATAL:', expect.any(Error));
+    expect(mockExit).toHaveBeenCalledWith(1);
+
+    errSpy.mockRestore();
+    // Restaurar mockExit
+    mockExit.mockImplementation((() => {}) as never);
+  });
 });
