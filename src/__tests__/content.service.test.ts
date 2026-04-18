@@ -17,24 +17,28 @@ describe('ContentService', () => {
     vi.clearAllMocks();
   });
 
-  it('deve usar o tópico default "geral" se a lista de tópicos falhar', async () => {
-    // Math.random sempre retornará 1 para este teste, assim testando o "|| 'geral'" se o array out-of-bounds mockado
-    vi.spyOn(Math, 'random').mockReturnValueOnce(1); // 1 * length = length (out of bounds for array indexing)
+  const createMockQuiz = (tema: string) => ({
+    tema,
+    pergunta: 'P',
+    opcoes: { A: '1', B: '2', C: '3', D: '4' },
+    resposta_correta: 'A',
+    fato_curioso: 'Fato.'
+  });
 
-    const mockQuiz = {
-      tema: 'geral',
-      pergunta: 'P',
-      opcoes: { A: '1', B: '2', C: '3', D: '4' },
-      resposta_correta: 'A',
-      fato_curioso: 'Fato.'
-    };
-
+  const mockGenerateObjectResponse = (mockQuiz: any) => {
     vi.mocked(generateObject).mockResolvedValueOnce({
       object: mockQuiz,
       finishReason: 'stop',
       usage: { promptTokens: 0, completionTokens: 0, totalTokens: 0 },
       warnings: []
     } as any);
+  };
+
+  it('deve usar o tópico default "geral" se a lista de tópicos falhar', async () => {
+    // Math.random sempre retornará 1 para este teste, assim testando o "|| 'geral'" se o array out-of-bounds mockado
+    vi.spyOn(Math, 'random').mockReturnValueOnce(1); // 1 * length = length (out of bounds for array indexing)
+
+    mockGenerateObjectResponse(createMockQuiz('geral'));
 
     const quiz = await generateQuiz();
     expect(quiz.tema).toBe('geral');
@@ -49,19 +53,13 @@ describe('ContentService', () => {
 
   it('deve gerar um quiz com a estrutura correta usando AI SDK', async () => {
     const mockQuiz = {
-      tema: 'jogos',
+      ...createMockQuiz('jogos'),
       pergunta: 'Quem é o protagonista de Zelda?',
       opcoes: { A: 'Zelda', B: 'Link', C: 'Ganon', D: 'Epona' },
-      resposta_correta: 'B',
-      fato_curioso: 'Fato.'
+      resposta_correta: 'B'
     };
 
-    vi.mocked(generateObject).mockResolvedValueOnce({
-      object: mockQuiz,
-      finishReason: 'stop',
-      usage: { promptTokens: 0, completionTokens: 0, totalTokens: 0 },
-      warnings: []
-    } as any);
+    mockGenerateObjectResponse(mockQuiz);
 
     const quiz = await generateQuiz();
     
@@ -71,20 +69,7 @@ describe('ContentService', () => {
   });
 
   it('deve preencher o tema se o modelo retornar vazio', async () => {
-    const mockQuiz = {
-      tema: '',
-      pergunta: 'Pergunta?',
-      opcoes: { A: '1', B: '2', C: '3', D: '4' },
-      resposta_correta: 'A',
-      fato_curioso: 'Fato.'
-    };
-
-    vi.mocked(generateObject).mockResolvedValueOnce({
-      object: mockQuiz,
-      finishReason: 'stop',
-      usage: { promptTokens: 0, completionTokens: 0, totalTokens: 0 },
-      warnings: []
-    } as any);
+    mockGenerateObjectResponse(createMockQuiz(''));
 
     const quiz = await generateQuiz();
     expect(quiz.tema).toBeDefined();
@@ -92,20 +77,7 @@ describe('ContentService', () => {
   });
 
   it('deve manter o tema se o modelo retornar preenchido', async () => {
-    const mockQuiz = {
-      tema: 'TEMA_PREENCHIDO',
-      pergunta: 'Pergunta?',
-      opcoes: { A: '1', B: '2', C: '3', D: '4' },
-      resposta_correta: 'A',
-      fato_curioso: 'Fato.'
-    };
-
-    vi.mocked(generateObject).mockResolvedValueOnce({
-      object: mockQuiz,
-      finishReason: 'stop',
-      usage: { promptTokens: 0, completionTokens: 0, totalTokens: 0 },
-      warnings: []
-    } as any);
+    mockGenerateObjectResponse(createMockQuiz('TEMA_PREENCHIDO'));
 
     const quiz = await generateQuiz();
     expect(quiz.tema).toBe('TEMA_PREENCHIDO');
