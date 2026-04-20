@@ -18,7 +18,7 @@ export interface NarrationResult {
  */
 const vttTimeToSeconds = (vttTime: string): number => {
   const [h, m, s] = vttTime.split(':');
-  if (h === undefined || m === undefined || s === undefined) return 0;
+  if (h === undefined || m === undefined || s === undefined) { return 0; }
   return parseFloat(h) * 3600 + parseFloat(m) * 60 + parseFloat(s.replace(',', '.'));
 };
 
@@ -67,7 +67,7 @@ export const generateNarration = async (
       const line = lines[i];
       if (line && line.includes('-->')) {
         const parts = line.split(' --> ');
-        if (parts.length < 2) continue;
+        if (parts.length < 2) { continue; }
         const [startStr, endStr] = parts;
         const nextLine = lines[i + 1];
         const word = nextLine ? nextLine.trim() : undefined;

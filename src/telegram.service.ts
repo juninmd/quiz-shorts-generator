@@ -32,7 +32,7 @@ const executeTelegramAction = async (
     try {
       await bot.stop();
     } catch (error) {
-      if (error) console.error('Erro ao parar o bot:', error);
+      if (error) { console.error('Erro ao parar o bot:', error); }
     }
   }
 
