@@ -15,7 +15,7 @@ export const wrapText = (text: string, maxLen: number): string => {
       currentLine += word + ' ';
     }
   }
-  if (currentLine) lines.push(currentLine.trim());
+  if (currentLine) { lines.push(currentLine.trim()); }
   return lines.join('\n');
 };
 
@@ -55,7 +55,7 @@ export const ensureFont = (): string => {
         }
       }
     }
-    if (!copied) console.warn('⚠️ Não foi possível copiar automaticamente a fonte Arial.');
+    if (!copied) { console.warn('⚠️ Não foi possível copiar automaticamente a fonte Arial.'); }
   }
   return fontFile;
 };

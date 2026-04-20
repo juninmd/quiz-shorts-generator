@@ -121,9 +121,9 @@ export const uploadToYouTube = async (
     return url;
   } catch (error: any) {
     let errorMessage = error.message || String(error);
-    if (clientId) errorMessage = errorMessage.replace(new RegExp(clientId, 'g'), '***CLIENT_ID_OCULTO***');
-    if (clientSecret) errorMessage = errorMessage.replace(new RegExp(clientSecret, 'g'), '***CLIENT_SECRET_OCULTO***');
-    if (refreshToken) errorMessage = errorMessage.replace(new RegExp(refreshToken, 'g'), '***REFRESH_TOKEN_OCULTO***');
+    if (clientId) { errorMessage = errorMessage.replace(new RegExp(clientId, 'g'), '***CLIENT_ID_OCULTO***'); }
+    if (clientSecret) { errorMessage = errorMessage.replace(new RegExp(clientSecret, 'g'), '***CLIENT_SECRET_OCULTO***'); }
+    if (refreshToken) { errorMessage = errorMessage.replace(new RegExp(refreshToken, 'g'), '***REFRESH_TOKEN_OCULTO***'); }
     console.error('❌ Erro ao enviar para o YouTube:', errorMessage);
     return null;
   }

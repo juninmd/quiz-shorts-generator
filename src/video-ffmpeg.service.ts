@@ -47,7 +47,7 @@ export const runFFmpeg = async (
 
       for (const rawLine of str.split(/\r?\n/)) {
         const line = rawLine.trim();
-        if (!line) continue;
+        if (!line) { continue; }
 
         if (/^(Input #|Duration:|Stream #|Metadata:)/.test(line)) {
           console.log(line);
@@ -69,7 +69,7 @@ export const runFFmpeg = async (
       clearInterval(keepAlive);
       process.stdout.write('\n');
       process.stdout.write(`\r⏳ 100%\n`);
-      if (code === 0) resolve();
+      if (code === 0) { resolve(); }
       else reject(new Error(`FFmpeg exited with ${code}`));
     });
   });
