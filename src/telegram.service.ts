@@ -46,7 +46,11 @@ export const sendVideoToTelegram = async (
   return executeTelegramAction(
     async (bot, chatId) => {
       await bot.api.sendVideo(chatId, new InputFile(videoPath), {
-        caption: caption,
+        caption: `🎬 <b>NOVO QUIZ GERADO</b>\n` +
+                 `──────────────────────\n` +
+                 `${caption}\n\n` +
+                 `──────────────────────\n` +
+                 `<i>Quiz Shorts Generator AI</i>`,
         supports_streaming: true,
         parse_mode: 'HTML',
       });
@@ -62,9 +66,15 @@ export const sendMessageToTelegram = async (
 ): Promise<boolean> => {
   return executeTelegramAction(
     async (bot, chatId) => {
-      await bot.api.sendMessage(chatId, message, {
-        parse_mode: 'HTML'
-      });
+      await bot.api.sendMessage(chatId, 
+        `📊 <b>STATUS DO QUIZ</b>\n` +
+        `──────────────────────\n` +
+        `${message}\n` +
+        `──────────────────────`, 
+        {
+          parse_mode: 'HTML'
+        }
+      );
     },
     `📤 Enviando mensagem de texto para o Telegram...`,
     '✅ Mensagem enviada com sucesso!',
