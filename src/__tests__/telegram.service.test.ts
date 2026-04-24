@@ -70,7 +70,7 @@ describe('TelegramService', () => {
 
       expect(result).toBe(true);
       expect(mockSendVideo).toHaveBeenCalledWith('chat123', mockInputFile, {
-        caption: 'caption',
+        caption: `🎬 <b>NOVO QUIZ GERADO</b>\n──────────────────────\ncaption\n\n──────────────────────\n<i>Quiz Shorts Generator AI</i>`,
         supports_streaming: true,
         parse_mode: 'HTML'
       });
@@ -85,7 +85,7 @@ describe('TelegramService', () => {
       const result = await sendMessageToTelegram('minha msg');
 
       expect(result).toBe(true);
-      expect(mockSendMessage).toHaveBeenCalledWith('chat123', 'minha msg', {
+      expect(mockSendMessage).toHaveBeenCalledWith('chat123', `📊 <b>STATUS DO QUIZ</b>\n──────────────────────\nminha msg\n──────────────────────`, {
         parse_mode: 'HTML'
       });
       expect(mockStop).toHaveBeenCalled();
