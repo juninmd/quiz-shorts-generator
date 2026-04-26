@@ -18,7 +18,9 @@ export interface NarrationResult {
  */
 const vttTimeToSeconds = (vttTime: string): number => {
   const [h, m, s] = vttTime.split(':');
-  if (h === undefined || m === undefined || s === undefined) { return 0; }
+  if (h === undefined || m === undefined || s === undefined) {
+    return 0;
+  }
   return parseFloat(h) * 3600 + parseFloat(m) * 60 + parseFloat(s.replace(',', '.'));
 };
 

@@ -13,8 +13,12 @@ async function main() {
   try {
     // 0. Preparar ambiente
     const outputDir = path.resolve('output');
-    if (!fs.existsSync(outputDir)) fs.mkdirSync(outputDir, { recursive: true });
-    if (!fs.existsSync('temp_assets')) fs.mkdirSync('temp_assets', { recursive: true });
+    if (!fs.existsSync(outputDir)) {
+      fs.mkdirSync(outputDir, { recursive: true });
+    }
+    if (!fs.existsSync('temp_assets')) {
+      fs.mkdirSync('temp_assets', { recursive: true });
+    }
 
     // 1. Gerar Conteúdo
     console.log('🤖 Gerando conteúdo...');

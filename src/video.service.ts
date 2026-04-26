@@ -13,7 +13,9 @@ export const assembleVideo = async (
   outputPath: string = 'final_short.mp4'
 ): Promise<string> => {
   const tempDir = path.resolve('temp_assets');
-  if (!fs.existsSync(tempDir)) { fs.mkdirSync(tempDir); }
+  if (!fs.existsSync(tempDir)) {
+    fs.mkdirSync(tempDir);
+  }
 
   console.log(`🎬 Montando vídeo completo...`);
 
