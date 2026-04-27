@@ -147,6 +147,10 @@ InvalidTimeFormat`;
     {
       name: 'retornar status diferente de 0',
       spawnResult: { status: 1, stderr: 'Python not found' }
+    },
+    {
+      name: 'retornar status diferente de 0 sem stderr',
+      spawnResult: { status: 1, stderr: null }
     }
   ])('deve lançar erro se spawnSync $name', async ({ spawnResult }) => {
     vi.mocked(fs.existsSync).mockReturnValue(true);
@@ -155,7 +159,7 @@ InvalidTimeFormat`;
     const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
 
-    await expect(generateNarration('teste', 'file')).rejects.toThrow('Falha na narração via edge-tts.');
+    await expect(generateNarration('teste', 'file')).rejects.toThrow(/Falha na narração via edge-tts/);
 
     consoleSpy.mockRestore();
     logSpy.mockRestore();

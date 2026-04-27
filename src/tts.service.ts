@@ -40,8 +40,6 @@ export const generateNarration = async (
   console.log(`🗣️ Invocando edge-tts (Python) para: ${fileName}...`);
 
   try {
-    // Comando edge-tts do Python com flags de áudio e legendas (vtt)
-    // Usando python -m edge_tts para garantir que o executável seja encontrado
     const args = [
       '-m', 'edge_tts',
       '--voice', voice,
@@ -55,15 +53,13 @@ export const generateNarration = async (
       throw result.error;
     }
     if (result.status !== 0) {
-      throw new Error(`Command failed with exit code ${result.status}: ${result.stderr}`);
+      const errorMsg = result.stderr ? result.stderr.toString() : 'Erro desconhecido no edge-tts';
+      throw new Error(`Command failed with exit code ${result.status}: ${errorMsg}`);
     }
 
-    // Parse do arquivo VTT para extrair os word timestamps
     const vttContent = fs.readFileSync(vttPath, 'utf8');
     const wordTimestamps: WordTimestamp[] = [];
 
-    // Regex para capturar os blocos de tempo e texto do VTT
-    // Ex: 00:00:00.000 --> 00:00:00.400\nTexto
     const lines = vttContent.split('\n');
     for (let i = 0; i < lines.length; i++) {
       const line = lines[i];
@@ -85,12 +81,9 @@ export const generateNarration = async (
       }
     }
 
-    // Opcional: Remove o VTT temporário
-    // fs.unlinkSync(vttPath);
-
     return { audioPath, wordTimestamps };
   } catch (error: any) {
     console.error(`❌ Erro ao invocar edge-tts (Python):`, error.message);
-    throw new Error('Falha na narração via edge-tts.');
+    throw new Error(`Falha na narração via edge-tts: ${error.message}`);
   }
 };

@@ -1,64 +1,64 @@
 # 🧠 AGENTS.md - Quiz Shorts Generator Intelligence System
 
-Este documento fornece instruções fundamentais para agentes de IA operando neste projeto. Ele descreve a arquitetura, convenções e fluxos críticos para garantir a continuidade e qualidade do desenvolvimento.
+Este documento fornece instruções fundamentais para agentes de IA operando neste projeto. Ele descreve a arquitetura, convenções e fluxos críticos para garantir a continuidade e qualidade do desenvolvimento sob o protocolo **Antigravity**.
 
 ## 🏗️ Arquitetura do Projeto
 
-O sistema é uma aplicação Node.js (TypeScript) que utiliza uma arquitetura baseada em serviços para gerar vídeos curtos (Shorts) de quiz automaticamente, integrando IA para conteúdo e automação de vídeo com FFmpeg.
+O sistema é uma aplicação Node.js (TypeScript) que utiliza uma arquitetura baseada em serviços para gerar vídeos curtos (Shorts) de quiz automaticamente, integrando IA generativa, processamento de áudio e vídeo.
 
-### 🧩 Fluxo de Execução Principal
-O ponto de entrada principal é `src/index.ts`, que coordena o seguinte fluxo:
-
-1. **Content Generation (`src/content.service.ts`)**: Utiliza o AI SDK (Vercel) com Ollama para gerar o conteúdo do quiz (pergunta, opções, resposta correta e fato curioso) em formato JSON estruturado com Zod.
-2. **Narração TTS (`src/tts.service.ts`)**: Invoca a ferramenta Python `edge-tts` via subprocesso para gerar o áudio (.mp3) e os timestamps de cada palavra (.vtt) para sincronização visual.
-3. **Orquestração de Vídeo (`src/video.service.ts`)**: Coordena a preparação de assets e a montagem final.
-   - `video-assets.service.ts`: Gerencia fontes, fundos neon, normalização de caminhos e geração de arquivos de texto temporários.
-   - `video-filters.service.ts`: Constrói a complexa cadeia de filtros FFmpeg (drawtext, overlay, amix, adelay).
-   - `video-ffmpeg.service.ts`: Executa o comando FFmpeg final utilizando `fluent-ffmpeg` ou spawn direto.
-4. **Distribuição**:
-   - `telegram.service.ts`: Envia o vídeo gerado para um canal via Bot API (GrammY).
-   - `youtube.service.ts`: Realiza o upload para o YouTube Shorts utilizando a API oficial (Googleapis), com títulos e descrições otimizados.
+### 🧩 Fluxo de Execução Principal (`src/index.ts`)
+1.  **Geração de Conteúdo (`src/content.service.ts`)**: Utiliza o **Vercel AI SDK** com **Ollama** para gerar o tema, pergunta, opções e fato curioso em formato JSON validado via **Zod**.
+2.  **Narração TTS (`src/tts.service.ts`)**: Invoca o `edge-tts` (Python) via subprocesso para gerar áudio (.mp3) e extrair timestamps de palavras (.vtt) para sincronização visual.
+3.  **Orquestração de Vídeo (`src/video.service.ts`)**:
+    *   `video-assets.service.ts`: Valida assets (fontes, fundos, logos) e prepara arquivos temporários de texto para o FFmpeg.
+    *   `video-filters.service.ts`: Define a lógica complexa de overlays, transições e sincronização de legendas.
+    *   `video-ffmpeg.service.ts`: Wrapper para execução do comando `ffmpeg`.
+4.  **Distribuição**:
+    *   `telegram.service.ts`: Envia o vídeo e notificações via **grammY**.
+    *   `youtube.service.ts`: Gera metadados otimizados para SEO e realiza o upload via **Google APIs**.
 
 ## 📜 Convenções de Código (Protocolo Antigravity)
 
-1. **Limite de Tamanho**: **Máximo 180 linhas por arquivo**. Se um serviço exceder este limite, deve ser decomposto em sub-módulos ou utilitários.
-2. **Tipagem Estrita**: TypeScript em modo estrito. Evite o uso de `any`. Defina interfaces claras para todas as trocas de dados entre serviços.
-3. **Responsabilidade Única**: Cada serviço deve focar em uma parte específica do pipeline (Conteúdo, Áudio, Filtros, Execução, Distribuição).
-4. **Testes Obrigatórios**: Mínimo de **80% de cobertura** de código. Utilize `vitest` e arquivos de teste em `src/__tests__/`.
-5. **KISS & DRY**: Prefira simplicidade e legibilidade. Evite abstrações prematuras.
+1.  **Limite de Tamanho**: **Máximo 180 linhas por arquivo**. Se exceder, decomponha em sub-módulos ou serviços específicos (Ex: split `video-filters` de `video-service`).
+2.  **Tipagem Estrita**: TypeScript `strict: true`. Proibido o uso de `any`. Use interfaces e tipos explícitos para contratos de serviços.
+3.  **Testes Obrigatórios (TDD)**: **100% de cobertura** exigida em Statements, Branches, Functions e Lines. Verifique sempre via `vitest.config.ts`.
+4.  **KISS & DRY**: Priorize legibilidade e simplicidade. Evite "over-engineering" e abstrações desnecessárias.
+5.  **Observabilidade**: Logs claros usando prefixos (🚀, ✅, ❌, ⚠️) para facilitar o debug remoto.
 
-## 🛠️ Comandos e Ferramentas
+## 🛠️ Stack Tecnológica & Comandos
 
-| Comando | Descrição |
+| Ferramenta | Uso |
 | :--- | :--- |
-| `pnpm install` | Instala as dependências do Node.js. |
-| `pip install -r requirements.txt` | Instala dependências Python (essencial para o `edge-tts`). |
-| `pnpm start` / `pnpm run generate` | Inicia o processo completo de geração de um quiz. |
-| `pnpm run dev` | Inicia em modo watch para desenvolvimento. |
-| `pnpm test` | Executa a suíte de testes com Vitest. |
-| `pnpm run test:coverage` | Gera relatório de cobertura de testes. |
-| `pnpm run lint` | Valida tipos com TSC (noEmit). |
+| **Node.js 24 + pnpm** | Runtime principal e gerenciador de pacotes. |
+| **TypeScript + tsx** | Linguagem e execução direta de scripts TS. |
+| **Vitest + V8** | Framework de testes e engine de cobertura. |
+| **FFmpeg** | Engine de processamento de vídeo (requer instalação no sistema). |
+| **Python 3 + edge-tts** | Utilizado para Text-to-Speech de alta qualidade. |
+| **Ollama** | Backend local para modelos de linguagem (AI SDK). |
 
-## 🔑 Variáveis de Ambiente Críticas (`.env`)
-
-- `OLLAMA_BASE_URL`: URL do servidor Ollama.
-- `AI_MODEL`: Modelo de IA para geração do quiz (ex: `gemma4:e4b`).
-- `ENABLE_YOUTUBE`: Habilita/desabilita o upload automatizado para o YouTube (`true`/`false`).
-- `TELEGRAM_TOKEN` & `TELEGRAM_CHAT_ID`: Para notificações e upload.
-- `YOUTUBE_CLIENT_ID`, `YOUTUBE_CLIENT_SECRET`, `YOUTUBE_REFRESH_TOKEN`: Para upload automatizado.
+### Comandos Frequentes
+```bash
+pnpm install                  # Instala dependências Node
+pip install edge-tts          # Instala dependência Python (global/venv)
+pnpm test                     # Executa testes unitários
+pnpm run test:coverage        # Verifica cobertura (deve ser 100%)
+pnpm run lint                 # Type-check via TSC
+pnpm start                    # Executa o fluxo completo
+```
 
 ## 🛡️ Áreas Sensíveis e Segurança
 
-- **FFmpeg Filters**: O arquivo `video-filters.service.ts` contém cálculos de posicionamento e temporização (reveal time). Modificações aqui devem ser testadas visualmente.
-- **Python Bridge**: O `tts.service.ts` depende do comando `python -m edge_tts`. Garanta que o ambiente Python esteja acessível.
-- **Assets Temporários**: A pasta `temp_assets/` é usada para arquivos intermediários (áudio, vtt, txt). O sistema deve limpar ou sobrescrever esses arquivos para evitar lixo.
-- **Segurança de Segredos**: Nunca logue variáveis de ambiente. Use o arquivo `.env.example` como referência para novas configurações.
+*   **Secrets**: Nunca logue `YOUTUBE_REFRESH_TOKEN` ou `TELEGRAM_TOKEN`. Use `redactSecrets()` em `utils.service.ts` para sanitizar erros.
+*   **Asset Paths**: Sempre use `path.resolve()` ou `normalizePath()` para evitar problemas com espaços em nomes de arquivos nos filtros do FFmpeg.
+*   **Temporary Assets**: Arquivos em `temp_assets/` e `output/` são ignorados pelo git. O sistema tenta limpar `temp_assets` ao final de cada execução bem-sucedida.
+*   **FFmpeg Filters**: A cadeia de filtros é sensível. Ao modificar `video-filters.service.ts`, valide sempre com `video-ffmpeg.service.test.ts`.
 
 ## 🤝 Guia para Agentes de IA
 
-1. **Reprodução**: Antes de corrigir um bug, tente reproduzi-lo com um novo caso de teste em `src/__tests__`.
-2. **Modularidade**: Ao adicionar novas funcionalidades (ex: novos temas, novos filtros), prefira criar um novo serviço ou estender `video-filters.service.ts` de forma modular.
-3. **Assets**: Se precisar de novas músicas ou fontes, adicione em `assets/` e atualize os serviços correspondentes.
+1.  **Reprodutibilidade**: Antes de qualquer fix, adicione um caso de teste em `src/__tests__` que comprove a falha.
+2.  **Desenvolvimento Cirúrgico**: Faça mudanças mínimas e precisas. Se uma refatoração for necessária para manter o limite de 180 linhas, faça-a em um passo separado.
+3.  **Dependências**: Verifique `package.json` antes de sugerir novas libs. Prefira nativos do Node.js ou libs já instaladas.
+4.  **Hardware**: O processamento de vídeo é intensivo em CPU. Evite criar múltiplos processos FFmpeg em paralelo sem controle.
 
 ---
-*"Automatizando a criatividade com precisão técnica."*
+*"Automatizando a criatividade com precisão técnica e rigor arquitetural."*
