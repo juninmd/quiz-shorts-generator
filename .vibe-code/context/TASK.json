@@ -1,0 +1,32 @@
+{
+  "id": "9560b2d5fd8b177b",
+  "title": "Gerar AGENTS.md",
+  "status": "failed",
+  "branchName": null,
+  "baseBranch": "master",
+  "parentTaskId": null,
+  "tags": [],
+  "runId": "f84a20e459ef9b9e",
+  "engine": "gemini",
+  "matchedSkills": [
+    "rule:code-design-principles",
+    "rule:command-safety",
+    "rule:context-efficiency",
+    "rule:data-privacy",
+    "rule:dependency-management",
+    "rule:dockerfile-standards",
+    "rule:env-secrets",
+    "rule:error-handling",
+    "rule:git-workflow",
+    "rule:naming-conventions",
+    "rule:observability",
+    "rule:security",
+    "rule:testing",
+    "rule:workspace-nav",
+    "skill:nookplot",
+    "skill:erc-8004",
+    "skill:helixa",
+    "skill:vector-forge",
+    "skill:genotoxic"
+  ]
+}
