@@ -69,7 +69,9 @@ export const generateNarration = async (
       const line = lines[i];
       if (line && line.includes('-->')) {
         const parts = line.split(' --> ');
-        if (parts.length < 2) { continue; }
+        if (parts.length < 2) {
+          continue;
+        }
         const [startStr, endStr] = parts;
         const nextLine = lines[i + 1];
         const word = nextLine ? nextLine.trim() : undefined;

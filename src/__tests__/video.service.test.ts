@@ -42,13 +42,19 @@ describe('VideoService', () => {
   it('deve criar tempDir e selecionar musica de fundo se existir', async () => {
     vi.mocked(fs.existsSync).mockImplementation((p: any) => {
       const sp = String(p);
-      if (sp.includes('temp_assets')) { return false; } // forces mkdir
-      if (sp.includes('music')) { return true; }
+      if (sp.includes('temp_assets')) {
+        return false;
+      } // forces mkdir
+      if (sp.includes('music')) {
+        return true;
+      }
       return true;
     });
 
     vi.mocked(fs.readdirSync).mockImplementation((p: any) => {
-      if (String(p).includes('music')) { return ['background_1.mp3'] as any; }
+      if (String(p).includes('music')) {
+        return ['background_1.mp3'] as any;
+      }
       return [];
     });
 
@@ -82,7 +88,9 @@ describe('VideoService', () => {
   ])('deve $name', async ({ hasMusic, throws, expectedResult }) => {
     vi.mocked(fs.existsSync).mockImplementation((p: any) => {
       const sp = String(p);
-      if (sp.includes('music')) { return hasMusic; }
+      if (sp.includes('music')) {
+        return hasMusic;
+      }
       return true;
     });
 

@@ -42,8 +42,9 @@ describe('TelegramService', () => {
       { deleteToken: false, method: () => sendVideoToTelegram('video.mp4', 'caption') },
       { deleteToken: true, method: () => sendMessageToTelegram('msg') }
     ])('deve retornar false se token ou chatId faltarem (deleteToken: $deleteToken)', async ({ deleteToken, method }) => {
-      if (deleteToken) { delete process.env.TELEGRAM_TOKEN; }
-      else {
+      if (deleteToken) {
+        delete process.env.TELEGRAM_TOKEN;
+      } else {
         process.env.TELEGRAM_TOKEN = 'token';
         delete process.env.TELEGRAM_CHAT_ID;
       }
