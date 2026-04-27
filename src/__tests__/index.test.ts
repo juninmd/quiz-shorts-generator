@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import * as fs from 'node:fs';
-
+import * as fsPromises from 'node:fs/promises';
 
 // Import services and mock them
 import { generateQuiz } from '../content.service.js';
@@ -14,7 +14,8 @@ vi.mock('../tts.service.js');
 vi.mock('../video.service.js');
 vi.mock('../telegram.service.js');
 vi.mock('../youtube.service.js');
-vi.mock('fs');
+vi.mock('node:fs');
+vi.mock('node:fs/promises');
 
 // We have to mock process.exit
 const mockExit = vi.spyOn(process, 'exit').mockImplementation((() => {}) as never);
@@ -52,6 +53,8 @@ describe('Index (Main Execution Loop)', () => {
     vi.mocked(uploadToYouTube).mockResolvedValue(ytUploadSuccess ? 'https://youtube' : null);
 
     vi.mocked(fs.existsSync).mockReturnValue(false);
+    vi.mocked(fsPromises.mkdir).mockResolvedValue(undefined);
+    vi.mocked(fsPromises.rm).mockResolvedValue(undefined);
   };
 
   const executeFlux = async () => {
@@ -62,7 +65,7 @@ describe('Index (Main Execution Loop)', () => {
 
   it('deve executar o fluxo completo sem youtube e sucesso no telegram', async () => {
     setupMocks('false', true, false);
-    vi.mocked(fs.existsSync).mockImplementation((p: fs.PathLike) => String(p).includes('temp_assets'));
+    vi.mocked(fs.existsSync).mockImplementation((p: any) => String(p).includes('temp_assets'));
 
     await executeFlux();
 
@@ -72,7 +75,7 @@ describe('Index (Main Execution Loop)', () => {
     expect(sendVideoToTelegram).toHaveBeenCalled();
     expect(generateYoutubeMetadata).not.toHaveBeenCalled();
     expect(mockExit).toHaveBeenCalledWith(0);
-    expect(fs.rmSync).toHaveBeenCalledWith('temp_assets', { recursive: true, force: true });
+    expect(fsPromises.rm).toHaveBeenCalledWith('temp_assets', { recursive: true, force: true });
   });
 
   it('deve executar fluxo com youtube e sucesso na url gerada', async () => {
@@ -105,7 +108,7 @@ describe('Index (Main Execution Loop)', () => {
     await executeFlux();
 
     expect(mockExit).toHaveBeenCalledWith(1);
-    expect(fs.rmSync).not.toHaveBeenCalled(); // Nao limpa se o telegram falhou
+    expect(fsPromises.rm).not.toHaveBeenCalled(); // Nao limpa se o telegram falhou
   });
 
   it('deve capturar erro fatal repassado pro catch principal e executar exit 1', async () => {

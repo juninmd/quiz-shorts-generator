@@ -5,6 +5,7 @@ import { assembleVideo } from './video.service.js';
 import { sendVideoToTelegram, sendMessageToTelegram } from './telegram.service.js';
 import { generateYoutubeMetadata, uploadToYouTube } from './youtube.service.js';
 import fs from 'fs';
+import fsPromises from 'fs/promises';
 import path from 'path';
 
 async function main() {
@@ -14,10 +15,10 @@ async function main() {
     // 0. Preparar ambiente
     const outputDir = path.resolve('output');
     if (!fs.existsSync(outputDir)) {
-      fs.mkdirSync(outputDir, { recursive: true });
+      await fsPromises.mkdir(outputDir, { recursive: true });
     }
     if (!fs.existsSync('temp_assets')) {
-      fs.mkdirSync('temp_assets', { recursive: true });
+      await fsPromises.mkdir('temp_assets', { recursive: true });
     }
 
     // 1. Gerar Conteúdo
@@ -70,7 +71,7 @@ async function main() {
     if (sent) {
       console.log('🧹 Limpando arquivos temporários...');
       if (fs.existsSync('temp_assets')) {
-        fs.rmSync('temp_assets', { recursive: true, force: true });
+        await fsPromises.rm('temp_assets', { recursive: true, force: true });
       }
       console.log('✨ Processo concluído com sucesso!');
       process.exit(0);
