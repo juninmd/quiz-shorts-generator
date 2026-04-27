@@ -1,15 +1,16 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { assembleVideo } from '../video.service.js';
-import * as child_process from 'node:child_process';
+import * as execModule from '../utils/exec.js';
 import * as fs from 'node:fs';
+import * as fsPromises from 'node:fs/promises';
 
-
-vi.mock('child_process');
-vi.mock('fs');
+vi.mock('../utils/exec.js');
+vi.mock('node:fs');
+vi.mock('node:fs/promises');
 vi.mock('../video-assets.service.js', () => ({
-  ensureFont: vi.fn(() => 'font.ttf'),
-  prepareBackground: vi.fn(() => 'bg.mp4'),
-  prepareTextFiles: vi.fn(() => ({ qTxtPath: 'q.txt', optTxtPaths: {} })),
+  ensureFont: vi.fn(() => Promise.resolve('font.ttf')),
+  prepareBackground: vi.fn(() => Promise.resolve('bg.mp4')),
+  prepareTextFiles: vi.fn(() => Promise.resolve({ qTxtPath: 'q.txt', optTxtPaths: {} })),
   normalizePath: (p: string) => `norm_${p}`
 }));
 vi.mock('../video-filters.service.js', () => ({
@@ -51,22 +52,24 @@ describe('VideoService', () => {
       return true;
     });
 
-    vi.mocked(fs.readdirSync).mockImplementation((p: any) => {
+    vi.mocked(fsPromises.readdir).mockImplementation((p: any) => {
       if (String(p).includes('music')) {
-        return ['background_1.mp3'] as any;
+        return Promise.resolve(['background_1.mp3'] as any);
       }
-      return [];
+      return Promise.resolve([]);
     });
 
-    vi.mocked(child_process.spawnSync).mockReturnValue({
-      stdout: Buffer.from('5.0\n')
-    } as any);
+    vi.mocked(execModule.execAsync).mockResolvedValue({
+      stdout: '5.0\n',
+      stderr: '',
+      code: 0
+    });
 
     const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
 
     const out = await assembleVideo(quizBase, audioData, 'out.mp4');
     expect(out).toBe('out.mp4');
-    expect(fs.mkdirSync).toHaveBeenCalled();
+    expect(fsPromises.mkdir).toHaveBeenCalled();
     expect(logSpy).toHaveBeenCalledWith(expect.stringContaining('Usando música de fundo: background_1.mp3'));
 
     logSpy.mockRestore();
@@ -94,14 +97,16 @@ describe('VideoService', () => {
       return true;
     });
 
+    vi.mocked(fsPromises.readdir).mockResolvedValue([]);
+
     if (throws) {
-      vi.mocked(child_process.spawnSync).mockImplementation(() => {
-        throw new Error(expectedResult);
-      });
+      vi.mocked(execModule.execAsync).mockRejectedValue(new Error(expectedResult));
     } else {
-      vi.mocked(child_process.spawnSync).mockReturnValue({
-        stdout: Buffer.from('2.0\n')
-      } as any);
+      vi.mocked(execModule.execAsync).mockResolvedValue({
+        stdout: '2.0\n',
+        stderr: '',
+        code: 0
+      });
     }
 
     const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {});

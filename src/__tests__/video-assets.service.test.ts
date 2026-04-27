@@ -1,10 +1,12 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { wrapText, normalizePath, rel, esc, ensureFont, prepareBackground, prepareTextFiles } from '../video-assets.service.js';
 import * as fs from 'node:fs';
-import * as child_process from 'node:child_process';
+import * as fsPromises from 'node:fs/promises';
+import * as execModule from '../utils/exec.js';
 
-vi.mock('fs');
-vi.mock('child_process');
+vi.mock('node:fs');
+vi.mock('node:fs/promises');
+vi.mock('../utils/exec.js');
 
 describe('VideoAssetsService', () => {
   beforeEach(() => {
@@ -28,8 +30,6 @@ describe('VideoAssetsService', () => {
   describe('normalizePath', () => {
     it('deve resolver e substituir contra-barras', () => {
       const result = normalizePath(String.raw`foo\bar`);
-      // On Windows it would output full path with forward slashes.
-      // On Linux it just resolves foo\bar. Let's just check no backslashes are present.
       expect(result).not.toContain('\\');
     });
   });
@@ -59,31 +59,39 @@ describe('VideoAssetsService', () => {
       Object.defineProperty(process, 'platform', { value: originalPlatform });
     });
 
-    it('deve retornar logo se arquivo já existe', () => {
+    it('deve retornar logo se arquivo já existe', async () => {
       vi.mocked(fs.existsSync).mockReturnValue(true);
-      expect(ensureFont()).toBe('assets/fonts/arialbd.ttf');
-      expect(fs.mkdirSync).not.toHaveBeenCalled();
+      const result = await ensureFont();
+      expect(result).toBe('assets/fonts/arialbd.ttf');
+      expect(fsPromises.mkdir).not.toHaveBeenCalled();
     });
 
-    it('deve copiar fonte no windows (win32)', () => {
-      vi.mocked(fs.existsSync).mockImplementation((p: any) => p === 'C:/Windows/Fonts/arialbd.ttf');
-      // Reset the previous mock of copyFileSync to let it "succeed" returning undefined
-      vi.mocked(fs.copyFileSync).mockReturnValue(undefined);
+    it('deve copiar fonte no windows (win32)', async () => {
+      vi.mocked(fs.existsSync).mockImplementation((p: any) => {
+        if (p === 'assets/fonts/arialbd.ttf') return false;
+        if (p === 'C:/Windows/Fonts/arialbd.ttf') return true;
+        return false;
+      });
+      vi.mocked(fsPromises.copyFile).mockResolvedValue(undefined);
       Object.defineProperty(process, 'platform', { value: 'win32' });
 
-      ensureFont();
+      await ensureFont();
 
-      expect(fs.mkdirSync).toHaveBeenCalledWith('assets/fonts', { recursive: true });
-      expect(fs.copyFileSync).toHaveBeenCalledWith('C:/Windows/Fonts/arialbd.ttf', 'assets/fonts/arialbd.ttf');
+      expect(fsPromises.mkdir).toHaveBeenCalledWith('assets/fonts', { recursive: true });
+      expect(fsPromises.copyFile).toHaveBeenCalledWith('C:/Windows/Fonts/arialbd.ttf', 'assets/fonts/arialbd.ttf');
     });
 
-    it('deve logar erro e continuar se a copia falhar (try catch no windows)', () => {
-      vi.mocked(fs.existsSync).mockImplementation((p: any) => p === 'C:/Windows/Fonts/arialbd.ttf');
-      vi.mocked(fs.copyFileSync).mockImplementation(() => { throw new Error('Permission denied'); });
+    it('deve logar erro e continuar se a copia falhar (try catch no windows)', async () => {
+      vi.mocked(fs.existsSync).mockImplementation((p: any) => {
+        if (p === 'assets/fonts/arialbd.ttf') return false;
+        if (p === 'C:/Windows/Fonts/arialbd.ttf') return true;
+        return false;
+      });
+      vi.mocked(fsPromises.copyFile).mockRejectedValue(new Error('Permission denied'));
       Object.defineProperty(process, 'platform', { value: 'win32' });
 
       const consoleWarn = vi.spyOn(console, 'warn').mockImplementation(() => {});
-      ensureFont();
+      await ensureFont();
 
       expect(consoleWarn).toHaveBeenCalledWith(
         '⚠️ Falha ao copiar a fonte de C:/Windows/Fonts/arialbd.ttf:',
@@ -93,32 +101,40 @@ describe('VideoAssetsService', () => {
       consoleWarn.mockRestore();
     });
 
-    it('deve copiar fonte no linux se msttcorefonts existir', () => {
-      vi.mocked(fs.existsSync).mockImplementation((p: any) => p === '/usr/share/fonts/truetype/msttcorefonts/Arial_Bold.ttf');
-      vi.mocked(fs.copyFileSync).mockReturnValue(undefined);
+    it('deve copiar fonte no linux se msttcorefonts existir', async () => {
+      vi.mocked(fs.existsSync).mockImplementation((p: any) => {
+        if (p === 'assets/fonts/arialbd.ttf') return false;
+        if (p === '/usr/share/fonts/truetype/msttcorefonts/Arial_Bold.ttf') return true;
+        return false;
+      });
+      vi.mocked(fsPromises.copyFile).mockResolvedValue(undefined);
       Object.defineProperty(process, 'platform', { value: 'linux' });
 
-      ensureFont();
+      await ensureFont();
 
-      expect(fs.copyFileSync).toHaveBeenCalledWith('/usr/share/fonts/truetype/msttcorefonts/Arial_Bold.ttf', 'assets/fonts/arialbd.ttf');
+      expect(fsPromises.copyFile).toHaveBeenCalledWith('/usr/share/fonts/truetype/msttcorefonts/Arial_Bold.ttf', 'assets/fonts/arialbd.ttf');
     });
 
-    it('deve copiar fonte do candidate dejavu no linux', () => {
-      vi.mocked(fs.existsSync).mockImplementation((p: any) => p === '/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf');
-      vi.mocked(fs.copyFileSync).mockReturnValue(undefined);
+    it('deve copiar fonte do candidate dejavu no linux', async () => {
+      vi.mocked(fs.existsSync).mockImplementation((p: any) => {
+        if (p === 'assets/fonts/arialbd.ttf') return false;
+        if (p === '/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf') return true;
+        return false;
+      });
+      vi.mocked(fsPromises.copyFile).mockResolvedValue(undefined);
       Object.defineProperty(process, 'platform', { value: 'linux' });
 
-      ensureFont();
+      await ensureFont();
 
-      expect(fs.copyFileSync).toHaveBeenCalledWith('/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf', 'assets/fonts/arialbd.ttf');
+      expect(fsPromises.copyFile).toHaveBeenCalledWith('/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf', 'assets/fonts/arialbd.ttf');
     });
 
-    it('deve alertar se nao achar nenhuma fonte no linux', () => {
+    it('deve alertar se nao achar nenhuma fonte no linux', async () => {
       vi.mocked(fs.existsSync).mockReturnValue(false); // nada existe
       Object.defineProperty(process, 'platform', { value: 'linux' });
 
       const consoleWarn = vi.spyOn(console, 'warn').mockImplementation(() => {});
-      ensureFont();
+      await ensureFont();
 
       expect(consoleWarn).toHaveBeenCalledWith('⚠️ Não foi possível copiar automaticamente a fonte Arial.');
       consoleWarn.mockRestore();
@@ -126,38 +142,38 @@ describe('VideoAssetsService', () => {
   });
 
   describe('prepareBackground', () => {
-    it('deve retornar neon se existir', () => {
+    it('deve retornar neon se existir', async () => {
       vi.mocked(fs.existsSync).mockReturnValue(true);
-      const bg = prepareBackground('temp');
+      const bg = await prepareBackground('temp');
       expect(bg).toContain('neon.png');
     });
 
-    it('deve retornar bg_default jpg gerado se neon nao existir', () => {
+    it('deve retornar bg_default jpg gerado se neon nao existir', async () => {
       // false para neon.png, false para bg_default.jpg
       vi.mocked(fs.existsSync).mockReturnValue(false);
-      vi.mocked(child_process.spawnSync).mockImplementation(() => ({} as any));
+      vi.mocked(execModule.execAsync).mockResolvedValue({ stdout: '', stderr: '', code: 0 });
 
-      const bg = prepareBackground('temp');
+      const bg = await prepareBackground('temp');
 
       expect(bg).toContain('bg_default.jpg');
-      expect(child_process.spawnSync).toHaveBeenCalledWith(
+      expect(execModule.execAsync).toHaveBeenCalledWith(
         'ffmpeg',
         expect.arrayContaining(['-f', 'lavfi', '-i', 'color=c=darkblue:s=1080x1920:d=1'])
       );
     });
 
-    it('deve retornar bg_default jpg sem regerar se ja existir', () => {
+    it('deve retornar bg_default jpg sem regerar se ja existir', async () => {
       vi.mocked(fs.existsSync).mockImplementation((p: any) => String(p).includes('bg_default.jpg'));
-      const bg = prepareBackground('temp');
+      const bg = await prepareBackground('temp');
 
       expect(bg).toContain('bg_default.jpg');
-      expect(child_process.spawnSync).not.toHaveBeenCalled();
+      expect(execModule.execAsync).not.toHaveBeenCalled();
     });
   });
 
   describe('prepareTextFiles', () => {
-    it('deve criar q.txt e optA/B/C/D.txt e retornar caminhos', () => {
-      vi.mocked(fs.writeFileSync).mockImplementation(() => {});
+    it('deve criar q.txt e optA/B/C/D.txt e retornar caminhos', async () => {
+      vi.mocked(fsPromises.writeFile).mockResolvedValue(undefined);
 
       const quiz = {
         tema: 'tema',
@@ -167,13 +183,13 @@ describe('VideoAssetsService', () => {
         fato_curioso: 'Fato'
       };
 
-      const result = prepareTextFiles(quiz, 'temp');
+      const result = await prepareTextFiles(quiz, 'temp');
 
       expect(result.qTxtPath).toContain('q.txt');
       expect(result.optTxtPaths.A).toContain('optA.txt');
       expect(result.optTxtPaths.D).toContain('optD.txt');
 
-      expect(fs.writeFileSync).toHaveBeenCalledTimes(5);
+      expect(fsPromises.writeFile).toHaveBeenCalledTimes(5);
     });
   });
 });
