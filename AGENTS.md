@@ -19,10 +19,11 @@
 
 ## 📜 Development Rules (Antigravity)
 
-1. **Size Limit**: **Max 150 lines per file**.
-2. **Clean Logic**: Separation of concerns enforced across all layers.
-3. **Validation**: All changes require successful tests and linting.
-4. **Security**: Sensitive data must be excluded from context.
+1. **Size Limit**: **Max 180 lines per file** (consistent with global mandates).
+2. **Performance First**: All core services must be fully asynchronous and non-blocking.
+3. **Clean Logic**: Separation of concerns enforced across all layers.
+4. **Validation**: All changes require 100% test coverage and linting.
+5. **Security**: Sensitive data must be excluded from context.
 
 ## 🤝 Interaction Protocol
 - Follow the **Plan -> Act -> Validate** cycle for every task.
