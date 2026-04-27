@@ -65,6 +65,31 @@ Mundo`;
     consoleSpy.mockRestore();
   });
 
+  it('deve extrair word timestamps a partir de um arquivo VTT valido com virgulas', async () => {
+    vi.mocked(fs.existsSync).mockReturnValue(true);
+    vi.mocked(child_process.spawnSync).mockReturnValue({ status: 0, error: undefined } as any);
+
+    const vttContent = `WEBVTT
+
+00:00:00,100 --> 00:00:00,500
+Olá
+
+00:00:00,600 --> 00:00:01,000
+Mundo`;
+    vi.mocked(fs.readFileSync).mockReturnValue(vttContent);
+
+    const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+
+    const result = await generateNarration('Olá Mundo', 'file');
+
+    expect(result.audioPath).toBe(path.join('temp_assets', 'file.mp3'));
+    expect(result.wordTimestamps).toHaveLength(2);
+    expect(result.wordTimestamps[0]).toEqual({ start: 0.1, end: 0.5, word: 'Olá' });
+    expect(result.wordTimestamps[1]).toEqual({ start: 0.6, end: 1, word: 'Mundo' });
+
+    consoleSpy.mockRestore();
+  });
+
   it('deve ignorar blocos incompletos ou invalidos no VTT', async () => {
     vi.mocked(fs.existsSync).mockReturnValue(true);
     vi.mocked(child_process.spawnSync).mockReturnValue({ status: 0, error: undefined } as any);
