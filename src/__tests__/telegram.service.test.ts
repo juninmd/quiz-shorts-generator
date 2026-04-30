@@ -183,7 +183,15 @@ describe('TelegramService', () => {
         expect(resMsg).toBe(true);
 
         expect(mockStop).toHaveBeenCalledTimes(2);
-        if (err) {
+
+        let hasErrorInCatch = false;
+        try {
+          if (err) { hasErrorInCatch = true; }
+        } catch (e) {
+          hasErrorInCatch = true;
+        }
+
+        if (hasErrorInCatch) {
             expect(consoleErrorSpy).toHaveBeenCalledWith('Erro ao parar o bot:', err);
         }
 

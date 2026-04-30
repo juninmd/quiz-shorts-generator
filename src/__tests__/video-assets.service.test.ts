@@ -68,8 +68,12 @@ describe('VideoAssetsService', () => {
 
     it('deve copiar fonte no windows (win32)', async () => {
       vi.mocked(fs.existsSync).mockImplementation((p: any) => {
-        if (p === 'assets/fonts/arialbd.ttf') return false;
-        if (p === 'C:/Windows/Fonts/arialbd.ttf') return true;
+        if (p === 'assets/fonts/arialbd.ttf') {
+          return false;
+        }
+        if (p === 'C:/Windows/Fonts/arialbd.ttf') {
+          return true;
+        }
         return false;
       });
       vi.mocked(fsPromises.copyFile).mockResolvedValue(undefined);
@@ -83,8 +87,12 @@ describe('VideoAssetsService', () => {
 
     it('deve logar erro e continuar se a copia falhar (try catch no windows)', async () => {
       vi.mocked(fs.existsSync).mockImplementation((p: any) => {
-        if (p === 'assets/fonts/arialbd.ttf') return false;
-        if (p === 'C:/Windows/Fonts/arialbd.ttf') return true;
+        if (p === 'assets/fonts/arialbd.ttf') {
+          return false;
+        }
+        if (p === 'C:/Windows/Fonts/arialbd.ttf') {
+          return true;
+        }
         return false;
       });
       vi.mocked(fsPromises.copyFile).mockRejectedValue(new Error('Permission denied'));
@@ -103,8 +111,12 @@ describe('VideoAssetsService', () => {
 
     it('deve copiar fonte no linux se msttcorefonts existir', async () => {
       vi.mocked(fs.existsSync).mockImplementation((p: any) => {
-        if (p === 'assets/fonts/arialbd.ttf') return false;
-        if (p === '/usr/share/fonts/truetype/msttcorefonts/Arial_Bold.ttf') return true;
+        if (p === 'assets/fonts/arialbd.ttf') {
+          return false;
+        }
+        if (p === '/usr/share/fonts/truetype/msttcorefonts/Arial_Bold.ttf') {
+          return true;
+        }
         return false;
       });
       vi.mocked(fsPromises.copyFile).mockResolvedValue(undefined);
@@ -117,8 +129,12 @@ describe('VideoAssetsService', () => {
 
     it('deve copiar fonte do candidate dejavu no linux', async () => {
       vi.mocked(fs.existsSync).mockImplementation((p: any) => {
-        if (p === 'assets/fonts/arialbd.ttf') return false;
-        if (p === '/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf') return true;
+        if (p === 'assets/fonts/arialbd.ttf') {
+          return false;
+        }
+        if (p === '/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf') {
+          return true;
+        }
         return false;
       });
       vi.mocked(fsPromises.copyFile).mockResolvedValue(undefined);
