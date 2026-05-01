@@ -29,7 +29,7 @@ describe('create-assets script', () => {
   });
 
   it('should create minimal MP3 files successfully', async () => {
-    await import('../create-assets.ts');
+    await import('../create-assets.js');
 
     expect(fs.mkdirSync).toHaveBeenCalledTimes(2);
     expect(fs.writeFileSync).toHaveBeenCalledTimes(2);
@@ -44,7 +44,7 @@ describe('create-assets script', () => {
       throw new Error('Test error');
     });
 
-    await import('../create-assets.ts');
+    await import('../create-assets.js');
 
     expect(consoleErrorSpy).toHaveBeenCalledWith('❌ Erro ao criar arquivos:', expect.any(Error));
     expect(processExitSpy).toHaveBeenCalledWith(1);
