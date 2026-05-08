@@ -66,18 +66,18 @@ describe('VideoAssetsService', () => {
       expect(fsPromises.mkdir).not.toHaveBeenCalled();
     });
 
-    it('deve copiar fonte no windows (win32)', async () => {
+    const setupWinMock = () => {
       vi.mocked(fs.existsSync).mockImplementation((p: any) => {
-        if (p === 'assets/fonts/arialbd.ttf') {
-          return false;
-        }
-        if (p === 'C:/Windows/Fonts/arialbd.ttf') {
-          return true;
-        }
+        if (p === 'assets/fonts/arialbd.ttf') return false;
+        if (p === 'C:/Windows/Fonts/arialbd.ttf') return true;
         return false;
       });
-      vi.mocked(fsPromises.copyFile).mockResolvedValue(undefined);
       Object.defineProperty(process, 'platform', { value: 'win32' });
+    };
+
+    it('deve copiar fonte no windows (win32)', async () => {
+      setupWinMock();
+      vi.mocked(fsPromises.copyFile).mockResolvedValue(undefined);
 
       await ensureFont();
 
@@ -86,63 +86,36 @@ describe('VideoAssetsService', () => {
     });
 
     it('deve logar erro e continuar se a copia falhar (try catch no windows)', async () => {
-      vi.mocked(fs.existsSync).mockImplementation((p: any) => {
-        if (p === 'assets/fonts/arialbd.ttf') {
-          return false;
-        }
-        if (p === 'C:/Windows/Fonts/arialbd.ttf') {
-          return true;
-        }
-        return false;
-      });
+      setupWinMock();
       vi.mocked(fsPromises.copyFile).mockRejectedValue(new Error('Permission denied'));
-      Object.defineProperty(process, 'platform', { value: 'win32' });
 
       const consoleWarn = vi.spyOn(console, 'warn').mockImplementation(() => {});
       await ensureFont();
 
-      expect(consoleWarn).toHaveBeenCalledWith(
-        '⚠️ Falha ao copiar a fonte de C:/Windows/Fonts/arialbd.ttf:',
-        expect.any(Error)
-      );
+      expect(consoleWarn).toHaveBeenCalledWith('⚠️ Falha ao copiar a fonte de C:/Windows/Fonts/arialbd.ttf:', expect.any(Error));
       expect(consoleWarn).toHaveBeenCalledWith('⚠️ Não foi possível copiar automaticamente a fonte Arial.');
       consoleWarn.mockRestore();
     });
 
-    it('deve copiar fonte no linux se msttcorefonts existir', async () => {
-      vi.mocked(fs.existsSync).mockImplementation((p: any) => {
-        if (p === 'assets/fonts/arialbd.ttf') {
+    const linuxSources = [
+      { name: 'se msttcorefonts existir', path: '/usr/share/fonts/truetype/msttcorefonts/Arial_Bold.ttf' },
+      { name: 'do candidate dejavu', path: '/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf' }
+    ];
+
+    linuxSources.forEach((source) => {
+      it(`deve copiar fonte no linux ${source.name}`, async () => {
+        vi.mocked(fs.existsSync).mockImplementation((p: any) => {
+          if (p === 'assets/fonts/arialbd.ttf') return false;
+          if (p === source.path) return true;
           return false;
-        }
-        if (p === '/usr/share/fonts/truetype/msttcorefonts/Arial_Bold.ttf') {
-          return true;
-        }
-        return false;
+        });
+        vi.mocked(fsPromises.copyFile).mockResolvedValue(undefined);
+        Object.defineProperty(process, 'platform', { value: 'linux' });
+
+        await ensureFont();
+
+        expect(fsPromises.copyFile).toHaveBeenCalledWith(source.path, 'assets/fonts/arialbd.ttf');
       });
-      vi.mocked(fsPromises.copyFile).mockResolvedValue(undefined);
-      Object.defineProperty(process, 'platform', { value: 'linux' });
-
-      await ensureFont();
-
-      expect(fsPromises.copyFile).toHaveBeenCalledWith('/usr/share/fonts/truetype/msttcorefonts/Arial_Bold.ttf', 'assets/fonts/arialbd.ttf');
-    });
-
-    it('deve copiar fonte do candidate dejavu no linux', async () => {
-      vi.mocked(fs.existsSync).mockImplementation((p: any) => {
-        if (p === 'assets/fonts/arialbd.ttf') {
-          return false;
-        }
-        if (p === '/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf') {
-          return true;
-        }
-        return false;
-      });
-      vi.mocked(fsPromises.copyFile).mockResolvedValue(undefined);
-      Object.defineProperty(process, 'platform', { value: 'linux' });
-
-      await ensureFont();
-
-      expect(fsPromises.copyFile).toHaveBeenCalledWith('/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf', 'assets/fonts/arialbd.ttf');
     });
 
     it('deve alertar se nao achar nenhuma fonte no linux', async () => {
