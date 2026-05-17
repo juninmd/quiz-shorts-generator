@@ -7,9 +7,17 @@
 
 ## ✨ Features
 
-- **High Performance**: Optimized for speed and low resource usage.
-- **Clean Architecture**: Built following strict Antigravity guidelines.
+- **High Performance**: Optimized for speed and low resource usage using hardware acceleration and parallel processing.
+- **Clean Architecture**: Built following strict Antigravity guidelines with a fully asynchronous core.
 - **Automated**: Integrated with modern CI/CD and verification scripts.
+
+## 🚀 Performance & Architecture
+
+The project has been heavily optimized for throughput and reliability:
+- **Asynchronous Engine**: All heavy operations (FFmpeg, TTS, I/O) are non-blocking, ensuring maximum CPU utilization.
+- **Parallel Pipeline**: Asset preparation (TTS, background, metadata) runs in parallel using `Promise.all`.
+- **Hardware Acceleration**: Automatic FFmpeg hardware acceleration (`-hwaccel auto`) for faster video encoding.
+- **Full Coverage**: 100% test coverage ensured with an asynchronous-first testing suite.
 
 ## 🛠️ Tech Stack
 

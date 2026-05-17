@@ -1,11 +1,22 @@
-import { spawnSync } from 'child_process';
 import fs from 'fs';
+import fsPromises from 'fs/promises';
 import path from 'path';
 import type { Quiz } from './content.service.js';
 import type { WordTimestamp } from './tts.service.js';
 import { ensureFont, prepareBackground, prepareTextFiles, normalizePath } from './video-assets.service.js';
 import { generateFilters } from './video-filters.service.js';
 import { runFFmpeg } from './video-ffmpeg.service.js';
+import { execAsync } from './utils/exec.js';
+
+const getDuration = async (filePath: string): Promise<number> => {
+  const result = await execAsync('ffprobe', [
+    '-v', 'error',
+    '-show_entries', 'format=duration',
+    '-of', 'default=noprint_wrappers=1:nokey=1',
+    filePath
+  ]);
+  return parseFloat(result.stdout.trim());
+};
 
 export const assembleVideo = async (
   quiz: Quiz,
@@ -14,24 +25,32 @@ export const assembleVideo = async (
 ): Promise<string> => {
   const tempDir = path.resolve('temp_assets');
   if (!fs.existsSync(tempDir)) {
-    fs.mkdirSync(tempDir);
+    await fsPromises.mkdir(tempDir, { recursive: true });
   }
 
   console.log(`🎬 Montando vídeo completo...`);
 
   try {
-    const fontFile = ensureFont();
     const qPath = normalizePath(audioData.qPath);
     const aPath = normalizePath(audioData.aPath);
-    const qDur = parseFloat(spawnSync('ffprobe', ['-v', 'error', '-show_entries', 'format=duration', '-of', 'default=noprint_wrappers=1:nokey=1', qPath]).stdout.toString().trim()); // NOSONAR
-    const aDur = parseFloat(spawnSync('ffprobe', ['-v', 'error', '-show_entries', 'format=duration', '-of', 'default=noprint_wrappers=1:nokey=1', aPath]).stdout.toString().trim()); // NOSONAR
 
+    // Executa ffprobes e preparações de assets em paralelo
+    const [qDur, aDur, fontFile, bgVideo, textFiles] = await Promise.all([
+      getDuration(qPath),
+      getDuration(aPath),
+      ensureFont(),
+      prepareBackground(tempDir),
+      prepareTextFiles(quiz, tempDir)
+    ]);
+
+    const { qTxtPath, optTxtPaths } = textFiles;
     const totalSeconds = qDur + aDur + 5;
 
     const musicDir = path.resolve('assets/music');
     let musicPath = '';
     if (fs.existsSync(musicDir)) {
-      const musicFiles = fs.readdirSync(musicDir).filter(f => f.startsWith('background') && f.endsWith('.mp3'));
+      const files = await fsPromises.readdir(musicDir);
+      const musicFiles = files.filter(f => f.startsWith('background') && f.endsWith('.mp3'));
       if (musicFiles.length > 0) {
         const randomMusic = musicFiles[Math.floor(Math.random() * musicFiles.length)] as string;
         musicPath = normalizePath(path.join('assets/music', randomMusic));
@@ -41,12 +60,9 @@ export const assembleVideo = async (
 
     const beepPath = normalizePath('assets/music/beep.mp3');
     const logoPath = normalizePath('assets/logo/logo.png');
-    const hasMusic = fs.existsSync(musicPath) && musicPath !== '';
+    const hasMusic = musicPath !== '' && fs.existsSync(musicPath);
     const hasBeep = fs.existsSync(beepPath);
     const hasLogo = fs.existsSync(logoPath);
-
-    const bgVideo = prepareBackground(tempDir);
-    const { qTxtPath, optTxtPaths } = prepareTextFiles(quiz, tempDir);
 
     const { ffmpegInputs, filterComplex } = generateFilters(
       quiz, bgVideo, qPath, aPath, qDur, fontFile, qTxtPath, optTxtPaths,

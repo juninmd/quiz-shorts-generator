@@ -1,6 +1,7 @@
-import { spawnSync } from 'child_process';
 import fs from 'fs';
+import fsPromises from 'fs/promises';
 import path from 'path';
+import { execAsync } from './utils/exec.js';
 
 export interface WordTimestamp {
   start: number;
@@ -30,7 +31,7 @@ export const generateNarration = async (
   outputDir: string = 'temp_assets'
 ): Promise<NarrationResult> => {
   if (!fs.existsSync(outputDir)) {
-    fs.mkdirSync(outputDir, { recursive: true });
+    await fsPromises.mkdir(outputDir, { recursive: true });
   }
 
   const audioPath = path.join(outputDir, `${fileName}.mp3`);
@@ -40,6 +41,7 @@ export const generateNarration = async (
   console.log(`🗣️ Invocando edge-tts (Python) para: ${fileName}...`);
 
   try {
+    // Comando edge-tts do Python com flags de áudio e legendas (vtt)
     const args = [
       '-m', 'edge_tts',
       '--voice', voice,
@@ -48,16 +50,13 @@ export const generateNarration = async (
       '--write-subtitles', vttPath
     ];
 
-    const result = spawnSync('python', args, { encoding: 'utf-8' }); // NOSONAR
-    if (result.error) {
-      throw result.error;
-    }
-    if (result.status !== 0) {
-      const errorMsg = result.stderr ? result.stderr.toString() : 'Erro desconhecido no edge-tts';
-      throw new Error(`Command failed with exit code ${result.status}: ${errorMsg}`);
+    const result = await execAsync('python', args);
+    if (result.code !== 0) {
+      throw new Error(`Command failed with exit code ${result.code}: ${result.stderr}`);
     }
 
-    const vttContent = fs.readFileSync(vttPath, 'utf8');
+    // Parse do arquivo VTT para extrair os word timestamps
+    const vttContent = await fsPromises.readFile(vttPath, 'utf8');
     const wordTimestamps: WordTimestamp[] = [];
 
     const lines = vttContent.split('\n');

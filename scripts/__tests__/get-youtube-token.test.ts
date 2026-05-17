@@ -68,7 +68,7 @@ describe('get-youtube-token script', () => {
   async function setupAndImport() {
     process.env.YOUTUBE_CLIENT_ID = 'test-id';
     process.env.YOUTUBE_CLIENT_SECRET = 'test-secret';
-    await import('../get-youtube-token.ts');
+    await import('../get-youtube-token.js');
   }
 
   function createMockRes() {
@@ -82,7 +82,7 @@ describe('get-youtube-token script', () => {
     delete process.env.YOUTUBE_CLIENT_ID;
     delete process.env.YOUTUBE_CLIENT_SECRET;
 
-    await import('../get-youtube-token.ts');
+    await import('../get-youtube-token.js');
 
     expect(consoleErrorSpy).toHaveBeenCalledWith(expect.stringContaining('❌ ERRO: Por favor, adicione YOUTUBE_CLIENT_ID e YOUTUBE_CLIENT_SECRET'));
     expect(processExitSpy).toHaveBeenCalledWith(1);

@@ -15,13 +15,12 @@ export const runFFmpeg = async (
   outputPath: string,
   totalSeconds: number
 ): Promise<void> => {
-  const args = ['-y', '-hide_banner', ...ffmpegInputs];
+  const args = ['-y', '-hide_banner', '-hwaccel', 'auto', ...ffmpegInputs];
   args.push('-filter_complex', filterComplex, '-map', '[vout]', '-map', '[aout]');
   args.push(
     '-c:v', 'libx264',
     '-preset', 'ultrafast',
     '-tune', 'fastdecode,zerolatency',
-    '-filter_threads', '2',
     '-r', '30',
     '-crf', '28',
     '-threads', '0',
