@@ -115,7 +115,7 @@ describe('TelegramService', () => {
         method: () => sendVideoToTelegram('video.mp4', 'caption'),
         mockFn: mockSendVideo,
         prefix: '❌ Erro ao enviar para o Telegram:',
-        expectedMsg: 'API error with ***TOKEN_OCULTO*** here'
+        expectedMsg: 'API error with ***SEGREDO_OCULTO*** here'
       },
       {
         name: 'video (string)',
@@ -123,7 +123,7 @@ describe('TelegramService', () => {
         method: () => sendVideoToTelegram('video.mp4', 'caption'),
         mockFn: mockSendVideo,
         prefix: '❌ Erro ao enviar para o Telegram:',
-        expectedMsg: 'Some string error ***TOKEN_OCULTO***'
+        expectedMsg: 'Some string error ***SEGREDO_OCULTO***'
       },
       {
         name: 'msg (Error instance)',
@@ -131,7 +131,7 @@ describe('TelegramService', () => {
         method: () => sendMessageToTelegram('minha msg'),
         mockFn: mockSendMessage,
         prefix: '❌ Erro ao enviar mensagem para o Telegram:',
-        expectedMsg: 'Failed ***TOKEN_OCULTO***'
+        expectedMsg: 'Failed ***SEGREDO_OCULTO***'
       },
       {
         name: 'msg (string)',
@@ -139,7 +139,7 @@ describe('TelegramService', () => {
         method: () => sendMessageToTelegram('minha msg'),
         mockFn: mockSendMessage,
         prefix: '❌ Erro ao enviar mensagem para o Telegram:',
-        expectedMsg: 'Some string error ***TOKEN_OCULTO***'
+        expectedMsg: 'Some string error ***SEGREDO_OCULTO***'
       }
     ])('deve retornar false e mascarar erro em $name', async ({ err, method, mockFn, prefix, expectedMsg }) => {
       mockFn.mockRejectedValueOnce(err);

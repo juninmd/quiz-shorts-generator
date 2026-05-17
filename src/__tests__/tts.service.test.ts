@@ -96,7 +96,6 @@ Teste`;
 
     const result = await generateNarration('teste', 'file');
 
-    // Expected extractions
     expect(result.wordTimestamps).toBeDefined();
 
     consoleSpy.mockRestore();
@@ -106,7 +105,6 @@ Teste`;
     vi.mocked(fs.existsSync).mockReturnValue(true);
     vi.mocked(execModule.execAsync).mockResolvedValue({ stdout: '', stderr: '', code: 0 });
 
-    // Time split that lacks colons
     const vttContent = `000000.100 --> 000000.500
 InvalidTimeFormat`;
     vi.mocked(fsPromises.readFile).mockResolvedValue(vttContent);

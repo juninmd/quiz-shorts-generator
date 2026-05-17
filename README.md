@@ -3,7 +3,7 @@
 [![Status: Active](https://img.shields.io/badge/Status-Active-brightgreen.svg)]()
 [![Protocol: Antigravity](https://img.shields.io/badge/Protocol-Antigravity-orange.svg)]()
 
-> A modern, high-performance project built with **Python 3.x**. Orchestrated under the Antigravity protocol.
+> A modern, high-performance project built with **Node.js/TypeScript**. Orchestrated under the Antigravity protocol.
 
 ## ✨ Features
 
@@ -21,8 +21,11 @@ The project has been heavily optimized for throughput and reliability:
 
 ## 🛠️ Tech Stack
 
-- **Primary Technology**: Python 3.x / Node.js
-- **Architecture**: Modular and domain-driven.
+- **Primary Technology**: Node.js 24+ (TypeScript)
+- **Secondary Technology**: Python 3 (Edge-TTS)
+- **Engine**: FFmpeg for video processing
+- **AI**: Vercel AI SDK + Ollama
+- **Architecture**: Modular and service-based.
 
 ## 🔑 Environment Variables
 

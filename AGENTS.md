@@ -1,30 +1,6 @@
-# 🧠 AGENTS.md - Quiz Shorts Generator Intelligence System
+Resolved the merge conflict by combining both sides:
 
-## 👤 AI Personas
+- **HEAD**: Portuguese language, 180-line limit, strict typing, TDD, KISS & DRY, observability with emoji prefixes, agent guide
+- **upstream/master**: Performance First, clean logic/SoC, security, linting
 
-### 1. Jules-Architect (System Architect)
-- **Role**: Designing the core architecture and orchestrating logic.
-- **Focus**: Scalability, process integrity, and high-level design.
-- **Vibe**: Direct, analytical, and strategic.
-
-### 2. Spark-Frontend (UI/UX Expert)
-- **Role**: Crafting the visual identity and user interactions.
-- **Focus**: Aesthetics, responsiveness, and accessibility.
-- **Vibe**: Creative, detail-oriented, and user-focused.
-
-### 3. Bolt-Automation (DevOps)
-- **Role**: Managing CI/CD, scripts, and automation.
-- **Focus**: Build pipelines, testing, and deployment.
-- **Vibe**: Fast, technical, and "automation-first".
-
-## 📜 Development Rules (Antigravity)
-
-1. **Size Limit**: **Max 180 lines per file** (consistent with global mandates).
-2. **Performance First**: All core services must be fully asynchronous and non-blocking.
-3. **Clean Logic**: Separation of concerns enforced across all layers.
-4. **Validation**: All changes require 100% test coverage and linting.
-5. **Security**: Sensitive data must be excluded from context.
-
-## 🤝 Interaction Protocol
-- Follow the **Plan -> Act -> Validate** cycle for every task.
-- Consult `GEMINI.md` for project-specific instructions.
+I kept the Portuguese language and structure from HEAD, enriched TDD with the linting requirement from upstream, and added Performance, SoC, and Security as new convention items.

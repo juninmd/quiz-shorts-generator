@@ -1,16 +1,29 @@
 import { google } from 'googleapis';
 import fs from 'fs';
 import dotenv from 'dotenv';
+import { z } from 'zod';
+import { generateObject } from 'ai';
+import { createOllama } from 'ollama-ai-provider';
 import type { Quiz } from './content.service.js';
-import { Ollama } from 'ollama';
+import { redactSecrets } from './utils.service.js';
 
 dotenv.config();
 
-const ollama = new Ollama({
-  host: process.env.OLLAMA_HOST || 'http://localhost:11434'
+const getOllamaClient = () => {
+  const host = process.env.OLLAMA_BASE_URL || process.env.OLLAMA_HOST || 'http://localhost:11434';
+  return createOllama({
+    baseURL: `${host}/api`,
+  });
+};
+
+const youtubeMetadataSchema = z.object({
+  title: z.string(),
+  description: z.string(),
 });
 
-export const generateYoutubeMetadata = async (quiz: Quiz): Promise<{ title: string; description: string }> => {
+export type YoutubeMetadata = z.infer<typeof youtubeMetadataSchema>;
+
+export const generateYoutubeMetadata = async (quiz: Quiz): Promise<YoutubeMetadata> => {
   const isEnabled = process.env.ENABLE_YOUTUBE === 'true';
 
   if (!isEnabled) {
@@ -20,43 +33,32 @@ export const generateYoutubeMetadata = async (quiz: Quiz): Promise<{ title: stri
     };
   }
 
-  const modelName = process.env.OLLAMA_MODEL || 'gemma3:1b';
+  let modelName = 'gemma4:e4b';
+  if (process.env.AI_MODEL) {
+    modelName = process.env.AI_MODEL;
+  } else if (process.env.OLLAMA_MODEL) {
+    modelName = process.env.OLLAMA_MODEL;
+  }
   const channelInfo = process.env.YOUTUBE_CHANNEL_NAME ? ` do canal ${process.env.YOUTUBE_CHANNEL_NAME}` : '';
 
-  const prompt = `Crie um título e uma descrição para um vídeo do YouTube Shorts${channelInfo} sobre o seguinte quiz:
-Tema: ${quiz.tema}
-Pergunta: ${quiz.pergunta}
-Fato Curioso: ${quiz.fato_curioso}
-
-O título deve ser chamativo, com no máximo 60 caracteres, e incluir emojis.
-A descrição deve ser curta, engajadora, ter no máximo 3 frases, e incluir as hashtags #quiz #shorts #curiosidades.
-Responda APENAS com um objeto JSON no formato:
-{
-  "title": "...",
-  "description": "..."
-}
-O texto deve estar em Português do Brasil.`;
+  const systemPrompt = `Você é um especialista em SEO para YouTube Shorts.
+    Crie títulos chamativos (máx 60 caracteres) e descrições curtas e engajadoras (máx 3 frases).
+    Sempre inclua as hashtags #quiz #shorts #curiosidades.
+    Língua: Português do Brasil.`;
 
   try {
-    const response = await ollama.chat({
-      model: modelName,
-      messages: [{ role: 'user', content: prompt }],
-      format: 'json',
+    const ollama = getOllamaClient();
+    const { object } = await generateObject({
+      model: ollama(modelName),
+      schema: youtubeMetadataSchema,
+      system: systemPrompt,
+      prompt: `Crie metadados para um vídeo do YouTube Shorts${channelInfo} sobre:
+        Tema: ${quiz.tema}
+        Pergunta: ${quiz.pergunta}
+        Fato Curioso: ${quiz.fato_curioso}`,
     });
 
-    const content = response.message.content.trim();
-    let cleanContent = content;
-    if (cleanContent.startsWith('```json')) {
-      cleanContent = cleanContent.substring(7, cleanContent.lastIndexOf('\`\`\`')).trim();
-    } else if (cleanContent.startsWith('```')) {
-      cleanContent = cleanContent.substring(3, cleanContent.lastIndexOf('\`\`\`')).trim();
-    }
-
-    const metadata = JSON.parse(cleanContent);
-    return {
-      title: metadata.title || `Quiz: ${quiz.tema}!`,
-      description: metadata.description || `#quiz #shorts #curiosidades`
-    };
+    return object;
   } catch (error) {
     console.error('❌ Erro ao gerar metadados para o YouTube:', error);
     return {
@@ -75,25 +77,20 @@ export const uploadToYouTube = async (
   const clientSecret = process.env.YOUTUBE_CLIENT_SECRET;
   const refreshToken = process.env.YOUTUBE_REFRESH_TOKEN;
 
-  const isEnabled = process.env.ENABLE_YOUTUBE === 'true';
-
-  if (!isEnabled) {
-    console.log('⏩ Upload para o YouTube desativado (ENABLE_YOUTUBE=false). Apenas enviando localmente/Telegram.');
+  if (process.env.ENABLE_YOUTUBE !== 'true') {
+    console.log('⏩ Upload para o YouTube desativado (ENABLE_YOUTUBE=false).');
     return null;
   }
 
   if (!clientId || !clientSecret || !refreshToken) {
-    console.warn('⚠️ Credenciais do YouTube ausentes no .env. Pulando upload para o YouTube.');
+    console.warn('⚠️ Credenciais do YouTube ausentes no .env. Pulando upload.');
     return null;
   }
 
   const oauth2Client = new google.auth.OAuth2(clientId, clientSecret);
   oauth2Client.setCredentials({ refresh_token: refreshToken });
 
-  const youtube = google.youtube({
-    version: 'v3',
-    auth: oauth2Client,
-  });
+  const youtube = google.youtube({ version: 'v3', auth: oauth2Client });
 
   console.log(`📤 Fazendo upload de ${videoPath} para o YouTube...`);
 
@@ -105,7 +102,7 @@ export const uploadToYouTube = async (
           title,
           description,
           tags: ['quiz', 'shorts', 'curiosidades'],
-          categoryId: '27', // Education
+          categoryId: '27',
         },
         status: {
           privacyStatus: 'public',
@@ -120,17 +117,7 @@ export const uploadToYouTube = async (
     console.log(`✅ Vídeo enviado para o YouTube! URL: ${url}`);
     return url;
   } catch (error: any) {
-    let errorMessage = error.message || String(error);
-    if (clientId) {
-      errorMessage = errorMessage.replace(new RegExp(clientId, 'g'), '***CLIENT_ID_OCULTO***');
-    }
-    if (clientSecret) {
-      errorMessage = errorMessage.replace(new RegExp(clientSecret, 'g'), '***CLIENT_SECRET_OCULTO***');
-    }
-    if (refreshToken) {
-      errorMessage = errorMessage.replace(new RegExp(refreshToken, 'g'), '***REFRESH_TOKEN_OCULTO***');
-    }
-    console.error('❌ Erro ao enviar para o YouTube:', errorMessage);
+    console.error('❌ Erro ao enviar para o YouTube:', redactSecrets(error.message || String(error)));
     return null;
   }
 };
