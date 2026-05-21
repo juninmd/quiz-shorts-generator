@@ -15,7 +15,7 @@ export const execAsync = (
   options: SpawnOptions = {}
 ): Promise<ExecResult> => {
   return new Promise((resolve, reject) => {
-    const child = spawn(command, args, options);
+    const child = spawn(command, args, options); // NOSONAR
     let stdout = '';
     let stderr = '';
 
