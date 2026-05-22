@@ -16,7 +16,12 @@ RUN apt-get update && apt-get install -y \
 COPY package.json pnpm-lock.yaml ./
 RUN pnpm install --frozen-lockfile
 
-COPY . .
+COPY src/ src/
+COPY scripts/ scripts/
+COPY assets/ assets/
+COPY tsconfig.json ./
+COPY .env.example ./
+
 # No build step needed since we use tsx in CMD, but we could compile to JS if we wanted.
 # For simplicity with the existing structure, we'll keep it as TS.
 
