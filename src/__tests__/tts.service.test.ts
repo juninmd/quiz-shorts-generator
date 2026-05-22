@@ -137,7 +137,7 @@ InvalidTimeFormat`;
       const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
       const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
 
-      await expect(generateNarration('teste', 'file')).rejects.toThrow('Falha na narração via edge-tts.');
+      await expect(generateNarration('teste', 'file')).rejects.toThrow('Falha na narração via edge-tts');
 
       consoleSpy.mockRestore();
       logSpy.mockRestore();
