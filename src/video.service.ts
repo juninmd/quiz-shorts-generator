@@ -1,6 +1,7 @@
 import fs from 'fs';
 import fsPromises from 'fs/promises';
 import path from 'path';
+import { randomInt } from 'node:crypto';
 import type { Quiz } from './content.service.js';
 import type { WordTimestamp } from './tts.service.js';
 import { ensureFont, prepareBackground, prepareTextFiles, normalizePath } from './video-assets.service.js';
@@ -52,7 +53,7 @@ export const assembleVideo = async (
       const files = await fsPromises.readdir(musicDir);
       const musicFiles = files.filter(f => f.startsWith('background') && f.endsWith('.mp3'));
       if (musicFiles.length > 0) {
-        const randomMusic = musicFiles[Math.floor(Math.random() * musicFiles.length)] as string;
+        const randomMusic = musicFiles[randomInt(musicFiles.length)] as string;
         musicPath = normalizePath(path.join('assets/music', randomMusic));
         console.log(`🎵 Usando música de fundo: ${randomMusic}`);
       }

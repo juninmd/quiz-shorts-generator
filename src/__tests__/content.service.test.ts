@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { generateQuiz } from '../content.service.js';
 import { generateObject } from 'ai';
+import * as crypto from 'node:crypto';
 
 // Mock AI SDK
 vi.mock('ai', () => ({
@@ -10,6 +11,10 @@ vi.mock('ai', () => ({
 // Mock Ollama provider
 vi.mock('ollama-ai-provider', () => ({
   createOllama: vi.fn(() => vi.fn())
+}));
+
+vi.mock('node:crypto', () => ({
+  randomInt: vi.fn().mockReturnValue(0)
 }));
 
 describe('ContentService', () => {
@@ -35,8 +40,7 @@ describe('ContentService', () => {
   };
 
   it('deve usar o tópico default "geral" se a lista de tópicos falhar', async () => {
-    // Math.random sempre retornará 1 para este teste, assim testando o "|| 'geral'" se o array out-of-bounds mockado
-    vi.spyOn(Math, 'random').mockReturnValueOnce(1); // 1 * length = length (out of bounds for array indexing)
+    vi.mocked(crypto.randomInt).mockReturnValueOnce(9999);
 
     mockGenerateObjectResponse(createMockQuiz('geral'));
 
@@ -47,8 +51,6 @@ describe('ContentService', () => {
         prompt: 'Gere um quiz sobre geral.'
       })
     );
-
-    vi.restoreAllMocks();
   });
 
   it('deve gerar um quiz com a estrutura correta usando AI SDK', async () => {
