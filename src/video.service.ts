@@ -7,6 +7,7 @@ import { ensureFont, prepareBackground, prepareTextFiles, normalizePath } from '
 import { generateFilters } from './video-filters.service.js';
 import { runFFmpeg } from './video-ffmpeg.service.js';
 import { execAsync } from './utils/exec.js';
+import { randomInt } from 'node:crypto';
 
 const getDuration = async (filePath: string): Promise<number> => {
   const result = await execAsync('ffprobe', [
@@ -52,7 +53,7 @@ export const assembleVideo = async (
       const files = await fsPromises.readdir(musicDir);
       const musicFiles = files.filter(f => f.startsWith('background') && f.endsWith('.mp3'));
       if (musicFiles.length > 0) {
-        const randomMusic = musicFiles[Math.floor(Math.random() * musicFiles.length)] as string;
+        const randomMusic = musicFiles[randomInt(0, musicFiles.length)] as string;
         musicPath = normalizePath(path.join('assets/music', randomMusic));
         console.log(`🎵 Usando música de fundo: ${randomMusic}`);
       }

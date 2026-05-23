@@ -2,6 +2,7 @@ import { createOllama } from 'ollama-ai-provider';
 import { generateObject } from 'ai';
 import { z } from 'zod';
 import dotenv from 'dotenv';
+import { randomInt } from 'node:crypto';
 
 dotenv.config();
 
@@ -30,7 +31,8 @@ export type Quiz = z.infer<typeof quizSchema>;
 export const generateQuiz = async (): Promise<Quiz> => {
   const modelName = process.env.AI_MODEL || process.env.OLLAMA_MODEL || 'gemma4:e4b';
   const topics = ['jogos', 'filmes', 'séries', 'animes', 'curiosidades gerais', 'bíblia', 'história', 'ciência'];
-  const topic = topics[Math.floor(Math.random() * topics.length)] || 'geral';
+  // We use type assertion since randomInt is guaranteed to return a valid index, preventing the need for an uncovered fallback branch
+  const topic = topics[randomInt(0, topics.length)] as string;
 
   console.log(`🤖 Usando AI SDK com Ollama modelo: ${modelName}`);
 
