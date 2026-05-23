@@ -22,7 +22,7 @@ jobs:
       - uses: actions/checkout@v6
 
       - name: Build and Push to GHCR
-        uses: juninmd/base-actions/docker-build-push@main
+        uses: juninmd/base-actions/docker-build-push@2d78bb7febae720e8ab8075ec6ae6e9785c0f6d2
         with:
           image-name: ${{ github.repository }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
