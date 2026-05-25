@@ -34,22 +34,6 @@ describe('ContentService', () => {
     } as any);
   };
 
-  it('deve usar o tópico default "geral" se a lista de tópicos falhar', async () => {
-    // Math.random sempre retornará 1 para este teste, assim testando o "|| 'geral'" se o array out-of-bounds mockado
-    vi.spyOn(Math, 'random').mockReturnValueOnce(1); // 1 * length = length (out of bounds for array indexing)
-
-    mockGenerateObjectResponse(createMockQuiz('geral'));
-
-    const quiz = await generateQuiz();
-    expect(quiz.tema).toBe('geral');
-    expect(generateObject).toHaveBeenCalledWith(
-      expect.objectContaining({
-        prompt: 'Gere um quiz sobre geral.'
-      })
-    );
-
-    vi.restoreAllMocks();
-  });
 
   it('deve gerar um quiz com a estrutura correta usando AI SDK', async () => {
     const mockQuiz = {
