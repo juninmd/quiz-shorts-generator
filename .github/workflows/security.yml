@@ -1,11 +1,14 @@
-﻿name: Security Scan
+name: Security Scan
 
 on:
   push:
     branches: [main, master]
   schedule:
-    - cron: '0 0 * * 1' # Weekly scan on Mondays
+    - cron: '0 0 * * 1'
+
+permissions:
+  contents: read
 
 jobs:
   gitleaks:
-    uses: juninmd/base-actions/.github/workflows/reusable-security-scan.yml@2d78bb7febae720e8ab8075ec6ae6e9785c0f6d2
+    uses: juninmd/base-actions/.github/workflows/reusable-security-scan.yml@main
