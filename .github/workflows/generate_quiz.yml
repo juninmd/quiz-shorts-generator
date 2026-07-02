@@ -1,0 +1,111 @@
+name: Daily Quiz Shorts Generator (Node.js/TS + Python)
+
+on:
+  schedule:
+    - cron: '0 0 * * *' # Roda a cada dia a meia noite (gerando 1 video/dia)
+  workflow_dispatch: # Permite rodar manualmente para testar
+
+concurrency:
+  group: daily-quiz-generator
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    env:
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+      OLLAMA_MODELS_DIR: /home/runner/.ollama/models
+      OLLAMA_MODEL: gemma3:1b # Definido globalmente para consistência do cache
+      OLLAMA_HOST: http://localhost:11434
+
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+        cache: 'pip'
+
+    - name: Install Python Dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install edge-tts
+
+    - name: Install System Dependencies
+      run: |
+        sudo apt-get update
+        # Aceita a licença das fontes da Microsoft automaticamente para evitar que o CI trave
+        echo ttf-mscorefonts-installer msttcorefonts/accepted-mscorefonts-eula select true | sudo debconf-set-selections
+        sudo apt-get install -y ffmpeg libass-dev ttf-mscorefonts-installer
+        sudo fc-cache -f -v
+
+    - name: Verify FFmpeg
+      run: ffmpeg -version
+
+    - name: Install pnpm
+      uses: pnpm/action-setup@v4
+      with:
+        version: 10
+
+    - name: Set up Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '24'
+        cache: 'pnpm'
+
+    - name: Setup Ollama with Cache
+      id: ollama-setup
+      uses: juninmd/base-actions/setup-ollama@main
+      with:
+        model: ${{ env.OLLAMA_MODEL }}
+        ollama-host: http://localhost:11434
+        wait-timeout: 180
+        pull-timeout: 15
+        cache-enabled: true
+
+    - name: Install Project Dependencies
+      run: pnpm install --frozen-lockfile
+
+    - name: Typecheck
+      run: pnpm lint
+
+    - name: Test
+      run: pnpm test
+
+    - name: Create Required Folders
+      run: mkdir -p assets/backgrounds assets/music assets/fonts assets/logo temp_assets/jobs output
+
+    - name: Run Quiz Generator
+      env:
+        WORKFLOW_ID: quiz
+        TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
+        TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        OLLAMA_HOST: http://localhost:11434
+        OLLAMA_MODEL: ${{ env.OLLAMA_MODEL }}
+        YOUTUBE_CLIENT_ID: ${{ secrets.YOUTUBE_CLIENT_ID }}
+        YOUTUBE_CLIENT_SECRET: ${{ secrets.YOUTUBE_CLIENT_SECRET }}
+        YOUTUBE_REFRESH_TOKEN: ${{ secrets.YOUTUBE_REFRESH_TOKEN }}
+        YOUTUBE_CHANNEL_NAME: ${{ secrets.YOUTUBE_CHANNEL_NAME }}
+        ENABLE_YOUTUBE: 'true'
+      run: |
+        echo "Verificando conectividade com Ollama..."
+        if ! curl -s http://localhost:11434/api/tags > /dev/null; then
+          echo "❌ Falha: Ollama não está respondendo em http://localhost:11434"
+          cat /tmp/ollama.log || echo "Log não disponível"
+          exit 1
+        fi
+        echo "✅ Ollama está acessível"
+        pnpm run start
+
+
+    - name: Upload Generated Shorts
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: generated-quiz-shorts
+        path: output/quiz_*.mp4
+        retention-days: 7
+        if-no-files-found: warn # Evita que a pipeline quebre caso o script não gere vídeos nessa rodada

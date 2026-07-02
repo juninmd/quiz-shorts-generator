@@ -10,6 +10,17 @@ const mockSendMessage = vi.fn();
 const mockStop = vi.fn();
 
 const mockInputFile = { fakeInputFile: true };
+const buildExpectedVideoCaption = (caption: string): string =>
+  `🎬 <b>NOVO QUIZ GERADO</b>\n` +
+  `──────────────────────\n` +
+  `${caption}\n\n` +
+  `──────────────────────\n` +
+  `<i>Quiz Shorts Generator AI</i>`;
+const buildExpectedStatusMessage = (message: string): string =>
+  `📊 <b>STATUS DO QUIZ</b>\n` +
+  `──────────────────────\n` +
+  `${message}\n` +
+  `──────────────────────`;
 
 vi.mock('grammy', () => {
   return {
@@ -71,11 +82,15 @@ describe('TelegramService', () => {
 
       expect(result).toBe(true);
       expect(mockSendVideo).toHaveBeenCalledWith('chat123', mockInputFile, {
+<<<<<<< Updated upstream
         caption: `🎬 <b>NOVO QUIZ GERADO</b>\n` +
                  `──────────────────────\n` +
                  `caption\n\n` +
                  `──────────────────────\n` +
                  `<i>Quiz Shorts Generator AI</i>`,
+=======
+        caption: buildExpectedVideoCaption('caption'),
+>>>>>>> Stashed changes
         supports_streaming: true,
         parse_mode: 'HTML'
       });
@@ -90,11 +105,15 @@ describe('TelegramService', () => {
       const result = await sendMessageToTelegram('minha msg');
 
       expect(result).toBe(true);
+<<<<<<< Updated upstream
       expect(mockSendMessage).toHaveBeenCalledWith('chat123',
         `📊 <b>STATUS DO QUIZ</b>\n` +
         `──────────────────────\n` +
         `minha msg\n` +
         `──────────────────────`, {
+=======
+      expect(mockSendMessage).toHaveBeenCalledWith('chat123', buildExpectedStatusMessage('minha msg'), {
+>>>>>>> Stashed changes
         parse_mode: 'HTML'
       });
       expect(mockStop).toHaveBeenCalled();

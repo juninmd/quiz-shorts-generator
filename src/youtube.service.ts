@@ -1,5 +1,6 @@
 import { google } from 'googleapis';
 import fs from 'fs';
+<<<<<<< Updated upstream
 import dotenv from 'dotenv';
 import { z } from 'zod';
 import { generateObject } from 'ai';
@@ -20,6 +21,11 @@ const youtubeMetadataSchema = z.object({
   title: z.string(),
   description: z.string(),
 });
+=======
+import { generateText } from 'ai';
+import type { Quiz } from './domain/quiz.js';
+import { getAIModel } from './ai-client.js';
+>>>>>>> Stashed changes
 
 export type YoutubeMetadata = z.infer<typeof youtubeMetadataSchema>;
 
@@ -33,6 +39,7 @@ export const generateYoutubeMetadata = async (quiz: Quiz): Promise<YoutubeMetada
     };
   }
 
+<<<<<<< Updated upstream
   let modelName = 'gemma4:e4b';
   if (process.env.AI_MODEL) {
     modelName = process.env.AI_MODEL;
@@ -59,6 +66,32 @@ export const generateYoutubeMetadata = async (quiz: Quiz): Promise<YoutubeMetada
     });
 
     return object;
+=======
+  const channelInfo = process.env.YOUTUBE_CHANNEL_NAME ? ` do canal ${process.env.YOUTUBE_CHANNEL_NAME}` : '';
+
+  const prompt = `Crie um título e uma descrição para um vídeo do YouTube Shorts${channelInfo} sobre o seguinte quiz:
+Tema: ${quiz.tema}
+Pergunta: ${quiz.pergunta}
+Fato Curioso: ${quiz.fato_curioso}
+
+O título deve ser chamativo, com no máximo 60 caracteres, e incluir emojis.
+A descrição deve ser curta, engajadora, ter no máximo 3 frases, e incluir as hashtags #quiz #shorts #curiosidades.
+Responda APENAS com um objeto JSON no formato:
+{"title":"...","description":"..."}
+O texto deve estar em Português do Brasil.`;
+
+  try {
+    const { text } = await generateText({ model: getAIModel(), prompt });
+    const jsonMatch = text.match(/\{[\s\S]*\}/);
+    if (jsonMatch) {
+      const metadata = JSON.parse(jsonMatch[0]);
+      return {
+        title: metadata.title || `Quiz: ${quiz.tema}!`,
+        description: metadata.description || `#quiz #shorts #curiosidades`
+      };
+    }
+    return { title: `Quiz: ${quiz.tema}!`, description: `#quiz #shorts #curiosidades` };
+>>>>>>> Stashed changes
   } catch (error) {
     console.error('❌ Erro ao gerar metadados para o YouTube:', error);
     return {
@@ -71,7 +104,8 @@ export const generateYoutubeMetadata = async (quiz: Quiz): Promise<YoutubeMetada
 export const uploadToYouTube = async (
   videoPath: string,
   title: string,
-  description: string
+  description: string,
+  options?: { privacyStatus?: 'public' | 'private' | 'unlisted' }
 ): Promise<string | null> => {
   const clientId = process.env.YOUTUBE_CLIENT_ID;
   const clientSecret = process.env.YOUTUBE_CLIENT_SECRET;
@@ -105,7 +139,7 @@ export const uploadToYouTube = async (
           categoryId: '27',
         },
         status: {
-          privacyStatus: 'public',
+          privacyStatus: options?.privacyStatus ?? 'public',
           selfDeclaredMadeForKids: false,
         },
       },

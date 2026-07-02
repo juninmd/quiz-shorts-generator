@@ -1,30 +1,27 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { generateYoutubeMetadata, uploadToYouTube } from '../youtube.service.js';
 import * as fs from 'node:fs';
+<<<<<<< Updated upstream
 import { generateObject } from 'ai';
+=======
+import { generateText } from 'ai';
+>>>>>>> Stashed changes
 
 vi.mock('fs');
-vi.mock('dotenv', () => ({ default: { config: vi.fn() } }));
 
-// We mock googleapis
 const mockVideosInsert = vi.fn();
-vi.mock('googleapis', () => {
-  return {
-    google: {
-      auth: {
-        OAuth2: vi.fn().mockImplementation(() => ({
-          setCredentials: vi.fn()
-        }))
-      },
-      youtube: vi.fn().mockImplementation(() => ({
-        videos: {
-          insert: mockVideosInsert
-        }
-      }))
-    }
-  };
-});
+vi.mock('googleapis', () => ({
+  google: {
+    auth: {
+      OAuth2: vi.fn().mockImplementation(() => ({ setCredentials: vi.fn() }))
+    },
+    youtube: vi.fn().mockImplementation(() => ({
+      videos: { insert: mockVideosInsert }
+    }))
+  }
+}));
 
+<<<<<<< Updated upstream
 // Mock AI SDK
 vi.mock('ai', () => ({
   generateObject: vi.fn()
@@ -33,6 +30,14 @@ vi.mock('ai', () => ({
 // Mock Ollama provider
 vi.mock('ollama-ai-provider', () => ({
   createOllama: vi.fn(() => vi.fn())
+=======
+vi.mock('ai', () => ({
+  generateText: vi.fn()
+}));
+
+vi.mock('../ai-client.js', () => ({
+  getAIModel: vi.fn(() => 'mock-model')
+>>>>>>> Stashed changes
 }));
 
 describe('YouTubeService', () => {
@@ -63,16 +68,28 @@ describe('YouTubeService', () => {
 
       expect(res.title).toBe('Quiz: teste!');
       expect(res.description).toBe('Teste seus conhecimentos! #quiz #shorts #curiosidades');
+<<<<<<< Updated upstream
       expect(generateObject).not.toHaveBeenCalled();
     });
 
     it('deve chamar generateObject e retornar metadata sem modelos configurados', async () => {
+=======
+      expect(generateText).not.toHaveBeenCalled();
+    });
+
+    it('deve chamar AI e retornar metadata processada', async () => {
+>>>>>>> Stashed changes
       process.env.ENABLE_YOUTUBE = 'true';
       delete process.env.AI_MODEL;
       delete process.env.OLLAMA_MODEL;
 
+<<<<<<< Updated upstream
       vi.mocked(generateObject).mockResolvedValueOnce({
         object: { title: 'Quiz top', description: 'Desc' }
+=======
+      vi.mocked(generateText).mockResolvedValueOnce({
+        text: JSON.stringify({ title: 'Quiz top', description: 'Desc' })
+>>>>>>> Stashed changes
       } as any);
 
       const res = await generateYoutubeMetadata(quizBase);
@@ -81,25 +98,38 @@ describe('YouTubeService', () => {
       expect(generateObject).toHaveBeenCalled();
     });
 
+<<<<<<< Updated upstream
     it('deve usar AI_MODEL se disponível e incluir channel name', async () => {
+=======
+    it('deve aplicar fallbacks caso o JSON não venha com as propriedades', async () => {
+>>>>>>> Stashed changes
       process.env.ENABLE_YOUTUBE = 'true';
       process.env.AI_MODEL = 'custom_model';
       process.env.YOUTUBE_CHANNEL_NAME = 'MeuCanal';
 
+<<<<<<< Updated upstream
       vi.mocked(generateObject).mockResolvedValueOnce({
         object: { title: 'T', description: 'D' }
       } as any);
+=======
+      vi.mocked(generateText).mockResolvedValueOnce({ text: '{}' } as any);
+>>>>>>> Stashed changes
 
       await generateYoutubeMetadata(quizBase);
       expect(generateObject).toHaveBeenCalled();
     });
 
+<<<<<<< Updated upstream
     it('deve usar OLLAMA_MODEL se AI_MODEL estiver ausente e lidar com falta de channel name', async () => {
+=======
+    it('deve extrair JSON de texto com conteúdo extra', async () => {
+>>>>>>> Stashed changes
       process.env.ENABLE_YOUTUBE = 'true';
       delete process.env.AI_MODEL;
       delete process.env.YOUTUBE_CHANNEL_NAME;
       process.env.OLLAMA_MODEL = 'ollama_model';
 
+<<<<<<< Updated upstream
       vi.mocked(generateObject).mockResolvedValueOnce({
         object: { title: 'T', description: 'D' }
       } as any);
@@ -111,6 +141,19 @@ describe('YouTubeService', () => {
     it('deve retornar default em caso de erro da chamada generateObject', async () => {
       process.env.ENABLE_YOUTUBE = 'true';
       vi.mocked(generateObject).mockRejectedValueOnce(new Error('AI Error'));
+=======
+      vi.mocked(generateText).mockResolvedValueOnce({
+        text: 'Aqui está o resultado:\n{"title": "Title Extra"}\nFim.'
+      } as any);
+
+      const res = await generateYoutubeMetadata(quizBase);
+      expect(res.title).toBe('Title Extra');
+    });
+
+    it('deve retornar default em caso de erro na chamada AI', async () => {
+      process.env.ENABLE_YOUTUBE = 'true';
+      vi.mocked(generateText).mockRejectedValueOnce(new Error('Network Err'));
+>>>>>>> Stashed changes
 
       const errSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
 
@@ -184,6 +227,7 @@ describe('YouTubeService', () => {
       errSpy.mockRestore();
       logSpy.mockRestore();
     });
+<<<<<<< Updated upstream
 
     it('deve lidar com erro sem mensagem no upload', async () => {
       process.env.ENABLE_YOUTUBE = 'true';
@@ -200,5 +244,7 @@ describe('YouTubeService', () => {
       expect(errSpy).toHaveBeenCalled();
       errSpy.mockRestore();
     });
+=======
+>>>>>>> Stashed changes
   });
 });

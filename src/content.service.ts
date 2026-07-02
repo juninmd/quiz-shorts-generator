@@ -1,40 +1,19 @@
-import { createOllama } from 'ollama-ai-provider';
 import { generateObject } from 'ai';
+<<<<<<< Updated upstream
 import { z } from 'zod';
 import dotenv from 'dotenv';
 import { randomInt } from 'node:crypto';
+=======
+import { quizSchema, type Quiz } from './domain/quiz.js';
+import { getAIModel } from './ai-client.js';
+>>>>>>> Stashed changes
 
-dotenv.config();
-
-const getOllamaClient = () => {
-    const host = process.env.OLLAMA_BASE_URL || process.env.OLLAMA_HOST || 'http://ollama.ai.svc.cluster.local:11434';
-    return createOllama({
-        baseURL: `${host}/api`,
-    });
-};
-
-const quizSchema = z.object({
-  tema: z.string(),
-  pergunta: z.string(),
-  opcoes: z.object({
-    A: z.string(),
-    B: z.string(),
-    C: z.string(),
-    D: z.string(),
-  }),
-  resposta_correta: z.enum(['A', 'B', 'C', 'D']),
-  fato_curioso: z.string(),
-});
-
-export type Quiz = z.infer<typeof quizSchema>;
+export type { Quiz } from './domain/quiz.js';
 
 export const generateQuiz = async (): Promise<Quiz> => {
-  const modelName = process.env.AI_MODEL || process.env.OLLAMA_MODEL || 'gemma4:e4b';
   const topics = ['jogos', 'filmes', 'séries', 'animes', 'curiosidades gerais', 'bíblia', 'história', 'ciência'];
   // We use type assertion since randomInt is guaranteed to return a valid index, preventing the need for an uncovered fallback branch
   const topic = topics[randomInt(0, topics.length)] as string;
-
-  console.log(`🤖 Usando AI SDK com Ollama modelo: ${modelName}`);
 
   const systemPrompt = `Você é um gerador de quizzes educativos extremamente rigoroso e preciso.
     O tema selecionado é: ${topic}.
@@ -47,9 +26,8 @@ export const generateQuiz = async (): Promise<Quiz> => {
     6. Língua: Português do Brasil.`;
 
   try {
-    const ollama = getOllamaClient();
     const { object } = await generateObject({
-      model: ollama(modelName),
+      model: getAIModel(),
       schema: quizSchema,
       prompt: `Gere um quiz sobre ${topic}.`,
       system: systemPrompt,
@@ -62,7 +40,7 @@ export const generateQuiz = async (): Promise<Quiz> => {
 
     return quizResult;
   } catch (error: any) {
-    console.error('❌ Erro na geração de conteúdo via AI SDK:', error.message || error);
+    console.error('❌ Erro na geração de conteúdo:', error.message || error);
     throw new Error(`Falha na geração de conteúdo: ${error.message}`);
   }
 };

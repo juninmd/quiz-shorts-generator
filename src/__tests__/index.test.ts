@@ -1,14 +1,21 @@
+<<<<<<< Updated upstream
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import * as fs from 'node:fs';
 import * as fsPromises from 'node:fs/promises';
+=======
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { runCli } from '../index.js';
+import { runApp } from '../app/main.js';
 
-// Import services and mock them
-import { generateQuiz } from '../content.service.js';
-import { generateNarration } from '../tts.service.js';
-import { assembleVideo } from '../video.service.js';
-import { sendVideoToTelegram, sendMessageToTelegram } from '../telegram.service.js';
-import { generateYoutubeMetadata, uploadToYouTube } from '../youtube.service.js';
+vi.mock('../app/main.js', () => ({
+  runApp: vi.fn(),
+}));
+>>>>>>> Stashed changes
 
+describe('Index CLI wrapper', () => {
+  const exitSpy = vi.spyOn(process, 'exit').mockImplementation((() => undefined) as never);
+
+<<<<<<< Updated upstream
 vi.mock('../content.service.js');
 vi.mock('../tts.service.js');
 vi.mock('../video.service.js');
@@ -24,28 +31,23 @@ describe('Index (Main Execution Loop)', () => {
   const originalEnv = process.env;
 
   beforeEach(async () => {
+=======
+  beforeEach(() => {
+>>>>>>> Stashed changes
     vi.clearAllMocks();
-    process.env = { ...originalEnv };
   });
 
-  afterEach(() => {
-    process.env = originalEnv;
-  });
-
-  const setupMocks = (youtubeEnabled: string, telegramSuccess: boolean, ytUploadSuccess: boolean) => {
-    process.env.ENABLE_YOUTUBE = youtubeEnabled;
-
-    vi.mocked(generateQuiz).mockResolvedValue({
-      tema: 'teste espaço',
-      pergunta: 'P',
-      opcoes: { A: '1', B: '2', C: '3', D: '4' },
-      resposta_correta: 'A',
-      fato_curioso: 'Fato'
+  it('encerra com sucesso quando o workflow retorna resultado gerado', async () => {
+    vi.mocked(runApp).mockResolvedValue({
+      jobId: 'job-1',
+      workflowId: 'quiz',
+      status: 'generated',
+      publishTargets: [],
     });
 
-    vi.mocked(generateNarration).mockResolvedValue({ audioPath: 'path.mp3', wordTimestamps: [] });
-    vi.mocked(assembleVideo).mockResolvedValue('out.mp4');
+    await runCli();
 
+<<<<<<< Updated upstream
     vi.mocked(sendVideoToTelegram).mockResolvedValue(telegramSuccess);
     vi.mocked(sendMessageToTelegram).mockResolvedValue(true);
 
@@ -131,19 +133,33 @@ describe('Index (Main Execution Loop)', () => {
     // Forçar que o catch interno dispare uma exceção para cair no catch externo
     mockExit.mockImplementationOnce(() => {
       throw new Error('Forced Exit Exception');
+=======
+    expect(exitSpy).toHaveBeenCalledWith(0);
+  });
+
+  it('encerra com erro quando o workflow retorna blocked', async () => {
+    vi.mocked(runApp).mockResolvedValue({
+      jobId: 'job-1',
+      workflowId: 'quiz',
+      status: 'blocked',
+      publishTargets: [],
+>>>>>>> Stashed changes
     });
 
-    vi.mocked(generateQuiz).mockRejectedValueOnce(new Error('Fatal Error'));
+    await runCli();
 
-    const errSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    expect(exitSpy).toHaveBeenCalledWith(1);
+  });
 
-    await executeFlux();
+  it('loga erro fatal e encerra com 1 quando o runner falha', async () => {
+    vi.mocked(runApp).mockRejectedValueOnce(new Error('fatal'));
+    const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
 
-    expect(errSpy).toHaveBeenCalledWith('💥 CRASH FATAL:', expect.any(Error));
-    expect(mockExit).toHaveBeenCalledWith(1);
+    await runCli();
 
-    errSpy.mockRestore();
-    // Restaurar mockExit
-    mockExit.mockImplementation((() => {}) as never);
+    expect(errorSpy).toHaveBeenCalledWith('💥 CRASH FATAL:', expect.any(Error));
+    expect(exitSpy).toHaveBeenCalledWith(1);
+
+    errorSpy.mockRestore();
   });
 });
