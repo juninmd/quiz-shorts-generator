@@ -1,6 +1,6 @@
 <<<<<<< Updated upstream
 # Build stage
-FROM node:24-slim AS builder
+FROM node:26-slim AS builder
 
 WORKDIR /app
 
@@ -27,7 +27,7 @@ COPY assets/ assets/
 # Final stage
 =======
 >>>>>>> Stashed changes
-FROM node:24-slim
+FROM node:26-slim
 
 WORKDIR /app
 
