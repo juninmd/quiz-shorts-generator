@@ -19,7 +19,7 @@ jobs:
       contents: read
       packages: write
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v4
 
       - name: Build and Push to GHCR
         uses: juninmd/base-actions/docker-build-push@2d78bb7febae720e8ab8075ec6ae6e9785c0f6d2
