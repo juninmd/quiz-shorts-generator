@@ -1,63 +1,93 @@
-# Setup Operacional
+# 🚀 Setup de Dependências - Quiz Shorts Generator
 
-## Workflow Ativo
+## Pré-requisitos
 
-O pipeline principal do repositório é o workflow `quiz`.
+Este projeto requer as seguintes dependências para funcionar corretamente:
 
-Execução local ou CI:
+### 1. **FFmpeg**
+
+- Status: **JÁ INSTALADO**
+- Versão: 7.1.1
+- Necessário para: Montagem de vídeos
+
+### 2. **Python 3.11+**
+
+- Status: **JÁ INSTALADO**
+- Versão: 3.11.4
+- Necessário para: Edge-TTS (síntese de fala)
+
+### 3. **Edge-TTS**
+
+- Status: **PENDENTE**
+- Instalar com:
 
 ```bash
-WORKFLOW_ID=quiz pnpm start
+pip install edge-tts
 ```
 
-## Telegram
+### 4. **Ollama**
 
-Variáveis mínimas:
+- Status: **NECESSÁRIO**
+- URL: [https://ollama.ai](https://ollama.ai)
+- Instalação: Baixar e instalar localmente
+- Configuração necessária no `.env`:
+  - `OLLAMA_HOST=http://localhost:11434`
+  - `OLLAMA_MODEL=qwen2.5:1.5b` (ou outro modelo disponível)
+
+## Ajustes de Configuração
+
+Edite o arquivo `.env` com suas credenciais:
 
 ```env
-TELEGRAM_TOKEN=...
-TELEGRAM_CHAT_ID=...
+# Ollama
+OLLAMA_HOST=http://localhost:11434
+OLLAMA_MODEL=qwen2.5:1.5b
+
+# Telegram (opcional para envio automático)
+TELEGRAM_TOKEN=seu_token_aqui
+TELEGRAM_CHAT_ID=seu_chat_id_aqui
+
+# YouTube (opcional para upload automático)
+YOUTUBE_CLIENT_ID=seu_client_id_aqui
+YOUTUBE_CLIENT_SECRET=seu_client_secret_aqui
+YOUTUBE_REFRESH_TOKEN=seu_refresh_token_aqui
 ```
 
-Sem essas variáveis, o workflow de quiz falha na etapa de publicação para Telegram.
+## Executar Geração de 5 Shorts
 
-## YouTube
+Após instalar todas as dependências:
 
-Variáveis mínimas:
+```bash
+# Gerar 5 shorts do dia
+pnpm run generate-daily
 
-```env
-ENABLE_YOUTUBE=true
-YOUTUBE_PRIVACY_STATUS=public
-YOUTUBE_CLIENT_ID=...
-YOUTUBE_CLIENT_SECRET=...
-YOUTUBE_REFRESH_TOKEN=...
+# Ou com npm
+npm run generate-daily
 ```
 
-Notas:
+## Saída
 
-- `ENABLE_YOUTUBE=false` desliga o upload.
-- `YOUTUBE_PRIVACY_STATUS` aceita `public`, `private` e `unlisted`.
-- Para fluxos com fontes de terceiros, a política do projeto rebaixa o upload para revisão/draft quando aplicável.
-
-## GitHub Actions
-
-O workflow [.github/workflows/generate_quiz.yml](.github/workflows/generate_quiz.yml) agora:
-
-- instala dependências com lockfile congelado;
-- executa `pnpm lint` e `pnpm test` antes da geração;
-- publica artifacts em `output/quiz_*.mp4`.
-
-O workflow [.github/workflows/secret-scan.yml](.github/workflows/secret-scan.yml) executa varredura de segredos com Gitleaks em `push`, `pull_request` e execução manual.
-
-## Guardrails Editoriais
-
-- `quiz`: auto-aprovado por ser conteúdo próprio.
-- `podcast-clips`: bloqueado até existir fonte autorizada com prova de permissão.
-- `release-radar`: bloqueado até existir fonte oficial/licenciada.
+Os vídeos serão salvos em: `output/short_1_*.mp4`, `output/short_2_*.mp4`, etc.
 
 ## Troubleshooting
 
-- `Ollama não está respondendo`: verifique `OLLAMA_HOST` e rode `ollama serve`.
-- `edge-tts não encontrado`: rode `python -m pip install edge-tts`.
-- `FFmpeg não encontrado`: instale FFmpeg/ffprobe e valide com `ffmpeg -version`.
+### Erro: "Ollama não está respondendo"
+
+- Certifique-se de que Ollama está rodando: `ollama serve`
+- Verifique a URL em `.env`
+
+### Erro: "edge-tts não encontrado"
+
+- Windows: `pip install edge-tts`
+- Mac/Linux: `pip3 install edge-tts`
+
+### Erro: "FFmpeg não encontrado"
+
+- Windows: Instalar via [ffmpeg.org](https://ffmpeg.org/download.html) (já feito)
+- Mac: `brew install ffmpeg`
+- Linux: `sudo apt install ffmpeg`
+
+---
+
+**Última atualização**: 15/03/2026
 

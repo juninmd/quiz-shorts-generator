@@ -1,21 +1,12 @@
-# Quiz Shorts Generator
+# 🚀 Quiz Shorts Generator
 
-Node.js/TypeScript platform for generating and publishing short-form videos through pluggable workflows. The current production-ready workflow is `quiz`. `podcast-clips` and `release-radar` are scaffolded in the runner and intentionally blocked until authorized input sources and source metadata are provided.
+[![Status: Active](https://img.shields.io/badge/Status-Active-brightgreen.svg)]()
+[![Protocol: Antigravity](https://img.shields.io/badge/Protocol-Antigravity-orange.svg)]()
 
-<<<<<<< Updated upstream
-> A modern, high-performance project built with **Node.js/TypeScript**. Orchestrated under the Antigravity protocol.
-=======
-## Features
->>>>>>> Stashed changes
+> A modern, high-performance project built with **Python 3.x**. Orchestrated under the Antigravity protocol.
 
-- Multi-workflow entrypoint through `src/app/main.ts` and `src/app/workflow-runner.ts`.
-- Current active workflow: `quiz`, with Telegram delivery and optional YouTube upload.
-- Domain contracts for `VideoJob`, `GeneratedVideo`, `SourceRef`, `PublishTarget`, `AuditRecord`, and `WorkflowResult`.
-- Job-scoped workspaces under `temp_assets/jobs/<jobId>` instead of one global temp directory.
-- Rights policy layer that auto-approves owned/licensed sources and downgrades third-party sources to review-only modes.
-- Audit ledger persisted as JSONL in `output/audit-ledger.jsonl`.
+## ✨ Features
 
-<<<<<<< Updated upstream
 - **High Performance**: Optimized for speed and low resource usage using hardware acceleration and parallel processing.
 - **Clean Architecture**: Built following strict Antigravity guidelines with a fully asynchronous core.
 - **Automated**: Integrated with modern CI/CD and verification scripts.
@@ -30,81 +21,29 @@ The project has been heavily optimized for throughput and reliability:
 
 ## 🛠️ Tech Stack
 
-- **Primary Technology**: Node.js 24+ (TypeScript)
-- **Secondary Technology**: Python 3 (Edge-TTS)
-- **Engine**: FFmpeg for video processing
-- **AI**: Vercel AI SDK + Ollama
-- **Architecture**: Modular and service-based.
-=======
-## Architecture
+- **Primary Technology**: Python 3.x / Node.js
+- **Architecture**: Modular and domain-driven.
 
-```text
-src/
-	app/
-		main.ts
-		workflow-runner.ts
-	workflows/
-		quiz.workflow.ts
-		podcast-clips.workflow.ts
-		release-radar.workflow.ts
-	domain/
-		quiz.ts
-		video-job.ts
-		generated-video.ts
-		publish-target.ts
-		source-ref.ts
-		audit-record.ts
-		workflow-result.ts
-	config/
-		env.ts
-		workflows.ts
-	services/
-		policy/
-		sources/
-```
+## 🔑 Environment Variables
 
-## Environment Variables
->>>>>>> Stashed changes
+To fully run the project, including the automated YouTube Shorts post logic, make sure to set up the following environment variables:
 
-Required core variables:
+- `OLLAMA_HOST`: The host URL for Ollama (default: `http://localhost:11434`).
+- `OLLAMA_MODEL`: The Ollama model to use (default: `qwen2.5:1.5b`).
+- `TELEGRAM_TOKEN`: Bot token for uploading the video via Telegram.
+- `TELEGRAM_CHAT_ID`: The chat ID for the destination in Telegram.
+- `YOUTUBE_CLIENT_ID`: OAuth2 Client ID for YouTube API.
+- `YOUTUBE_CLIENT_SECRET`: OAuth2 Client Secret for YouTube API.
+- `YOUTUBE_REFRESH_TOKEN`: OAuth2 Refresh Token that is authorized for your channel.
+- `YOUTUBE_CHANNEL_NAME`: (Optional) The name of the target channel to help Ollama generate personalized metadata.
 
-- `OLLAMA_HOST`: Ollama base URL.
-- `OLLAMA_MODEL`: Model used to generate quiz content and YouTube metadata.
-- `WORKFLOW_ID`: One of `quiz`, `podcast-clips`, or `release-radar`. Default: `quiz`.
-- `OUTPUT_DIR`: Output directory for rendered videos and audit ledger. Default: `output`.
-- `WORKSPACE_ROOT`: Root directory for per-job temp assets. Default: `temp_assets/jobs`.
+## 🛡️ Antigravity Protocol
 
-Publishing variables:
+This project follows the **Antigravity** code standards:
+- **150-Line Limit**: Applied to all logic modules.
+- **Strict Typing**: Avoiding dynamic/any types.
+- **Clean Code**: DRY, KISS, and SOLID principles applied rigorously.
 
-- `TELEGRAM_TOKEN`: Telegram bot token.
-- `TELEGRAM_CHAT_ID`: Telegram destination chat.
-- `ENABLE_YOUTUBE`: `true` or `false`.
-- `YOUTUBE_PRIVACY_STATUS`: `public`, `private`, or `unlisted`.
-- `YOUTUBE_CLIENT_ID`: OAuth2 client ID.
-- `YOUTUBE_CLIENT_SECRET`: OAuth2 client secret.
-- `YOUTUBE_REFRESH_TOKEN`: OAuth2 refresh token.
-- `YOUTUBE_CHANNEL_NAME`: Optional channel name used in metadata generation.
+---
 
-## Commands
-
-- `pnpm start`: Run the selected workflow.
-- `pnpm generate`: Alias for the current entrypoint.
-- `pnpm generate-daily`: Alias kept for compatibility with the quiz workflow.
-- `pnpm lint`: TypeScript typecheck.
-- `pnpm test`: Test suite.
-- `pnpm test:coverage`: Coverage run with 90% thresholds.
-
-## Guardrails
-
-- `quiz` is treated as owned content and can auto-publish.
-- `podcast-clips` and `release-radar` are scaffolded but blocked by default until authorized source inputs exist.
-- Third-party reused content must carry source metadata and permission evidence before publication is allowed.
-- Secret scanning runs in CI through `.github/workflows/secret-scan.yml`.
-
-## Current Status
-
-- `quiz`: implemented and upload-capable.
-- `podcast-clips`: runner scaffold only.
-- `release-radar`: runner scaffold only.
-
-See [INSTALL.md](INSTALL.md) for local installation and [SETUP.md](SETUP.md) for operational setup.
+*"Simplicity is the ultimate sophistication."*

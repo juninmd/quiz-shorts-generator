@@ -66,56 +66,53 @@ describe('VideoAssetsService', () => {
       expect(fsPromises.mkdir).not.toHaveBeenCalled();
     });
 
-    const setupWinMock = () => {
+    it.each([
+      {
+        name: 'copiar fonte no windows (win32)',
+        mockSetup: () => vi.mocked(fsPromises.copyFile).mockResolvedValue(undefined),
+        expectedError: false
+      },
+      {
+        name: 'logar erro e continuar se a copia falhar (try catch no windows)',
+        mockSetup: () => vi.mocked(fsPromises.copyFile).mockRejectedValue(new Error('Permission denied')),
+        expectedError: true
+      }
+    ])('deve $name', async ({ mockSetup, expectedError }) => {
       vi.mocked(fs.existsSync).mockImplementation((p: any) => {
         if (p === 'assets/fonts/arialbd.ttf') return false;
         if (p === 'C:/Windows/Fonts/arialbd.ttf') return true;
         return false;
       });
+      mockSetup();
       Object.defineProperty(process, 'platform', { value: 'win32' });
-    };
 
-    it('deve copiar fonte no windows (win32)', async () => {
-      setupWinMock();
-      vi.mocked(fsPromises.copyFile).mockResolvedValue(undefined);
-
-      await ensureFont();
-
-      expect(fsPromises.mkdir).toHaveBeenCalledWith('assets/fonts', { recursive: true });
-      expect(fsPromises.copyFile).toHaveBeenCalledWith('C:/Windows/Fonts/arialbd.ttf', 'assets/fonts/arialbd.ttf');
-    });
-
-    it('deve logar erro e continuar se a copia falhar (try catch no windows)', async () => {
-      setupWinMock();
-      vi.mocked(fsPromises.copyFile).mockRejectedValue(new Error('Permission denied'));
-
-      const consoleWarn = vi.spyOn(console, 'warn').mockImplementation(() => {});
-      await ensureFont();
-
-      expect(consoleWarn).toHaveBeenCalledWith('⚠️ Falha ao copiar a fonte de C:/Windows/Fonts/arialbd.ttf:', expect.any(Error));
-      expect(consoleWarn).toHaveBeenCalledWith('⚠️ Não foi possível copiar automaticamente a fonte Arial.');
-      consoleWarn.mockRestore();
-    });
-
-    const linuxSources = [
-      { name: 'se msttcorefonts existir', path: '/usr/share/fonts/truetype/msttcorefonts/Arial_Bold.ttf' },
-      { name: 'do candidate dejavu', path: '/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf' }
-    ];
-
-    linuxSources.forEach((source) => {
-      it(`deve copiar fonte no linux ${source.name}`, async () => {
-        vi.mocked(fs.existsSync).mockImplementation((p: any) => {
-          if (p === 'assets/fonts/arialbd.ttf') return false;
-          if (p === source.path) return true;
-          return false;
-        });
-        vi.mocked(fsPromises.copyFile).mockResolvedValue(undefined);
-        Object.defineProperty(process, 'platform', { value: 'linux' });
-
+      if (expectedError) {
+        const consoleWarn = vi.spyOn(console, 'warn').mockImplementation(() => {});
         await ensureFont();
+        expect(consoleWarn).toHaveBeenCalledWith(
+          '⚠️ Falha ao copiar a fonte de C:/Windows/Fonts/arialbd.ttf:',
+          expect.any(Error)
+        );
+        expect(consoleWarn).toHaveBeenCalledWith('⚠️ Não foi possível copiar automaticamente a fonte Arial.');
+        consoleWarn.mockRestore();
+      } else {
+        await ensureFont();
+        expect(fsPromises.mkdir).toHaveBeenCalledWith('assets/fonts', { recursive: true });
+        expect(fsPromises.copyFile).toHaveBeenCalledWith('C:/Windows/Fonts/arialbd.ttf', 'assets/fonts/arialbd.ttf');
+      }
+    });
 
-        expect(fsPromises.copyFile).toHaveBeenCalledWith(source.path, 'assets/fonts/arialbd.ttf');
-      });
+    it.each([
+      { name: 'msttcorefonts', path: '/usr/share/fonts/truetype/msttcorefonts/Arial_Bold.ttf' },
+      { name: 'dejavu', path: '/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf' }
+    ])('deve copiar fonte no linux se $name existir', async ({ path }) => {
+      vi.mocked(fs.existsSync).mockImplementation((p: any) => p === path);
+      vi.mocked(fsPromises.copyFile).mockResolvedValue(undefined);
+      Object.defineProperty(process, 'platform', { value: 'linux' });
+
+      await ensureFont();
+
+      expect(fsPromises.copyFile).toHaveBeenCalledWith(path, 'assets/fonts/arialbd.ttf');
     });
 
     it('deve alertar se nao achar nenhuma fonte no linux', async () => {

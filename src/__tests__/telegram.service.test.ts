@@ -10,17 +10,6 @@ const mockSendMessage = vi.fn();
 const mockStop = vi.fn();
 
 const mockInputFile = { fakeInputFile: true };
-const buildExpectedVideoCaption = (caption: string): string =>
-  `🎬 <b>NOVO QUIZ GERADO</b>\n` +
-  `──────────────────────\n` +
-  `${caption}\n\n` +
-  `──────────────────────\n` +
-  `<i>Quiz Shorts Generator AI</i>`;
-const buildExpectedStatusMessage = (message: string): string =>
-  `📊 <b>STATUS DO QUIZ</b>\n` +
-  `──────────────────────\n` +
-  `${message}\n` +
-  `──────────────────────`;
 
 vi.mock('grammy', () => {
   return {
@@ -82,15 +71,11 @@ describe('TelegramService', () => {
 
       expect(result).toBe(true);
       expect(mockSendVideo).toHaveBeenCalledWith('chat123', mockInputFile, {
-<<<<<<< Updated upstream
         caption: `🎬 <b>NOVO QUIZ GERADO</b>\n` +
                  `──────────────────────\n` +
                  `caption\n\n` +
                  `──────────────────────\n` +
                  `<i>Quiz Shorts Generator AI</i>`,
-=======
-        caption: buildExpectedVideoCaption('caption'),
->>>>>>> Stashed changes
         supports_streaming: true,
         parse_mode: 'HTML'
       });
@@ -105,15 +90,11 @@ describe('TelegramService', () => {
       const result = await sendMessageToTelegram('minha msg');
 
       expect(result).toBe(true);
-<<<<<<< Updated upstream
       expect(mockSendMessage).toHaveBeenCalledWith('chat123',
         `📊 <b>STATUS DO QUIZ</b>\n` +
         `──────────────────────\n` +
         `minha msg\n` +
         `──────────────────────`, {
-=======
-      expect(mockSendMessage).toHaveBeenCalledWith('chat123', buildExpectedStatusMessage('minha msg'), {
->>>>>>> Stashed changes
         parse_mode: 'HTML'
       });
       expect(mockStop).toHaveBeenCalled();
@@ -134,7 +115,7 @@ describe('TelegramService', () => {
         method: () => sendVideoToTelegram('video.mp4', 'caption'),
         mockFn: mockSendVideo,
         prefix: '❌ Erro ao enviar para o Telegram:',
-        expectedMsg: 'API error with ***SEGREDO_OCULTO*** here'
+        expectedMsg: 'API error with ***TOKEN_OCULTO*** here'
       },
       {
         name: 'video (string)',
@@ -142,7 +123,7 @@ describe('TelegramService', () => {
         method: () => sendVideoToTelegram('video.mp4', 'caption'),
         mockFn: mockSendVideo,
         prefix: '❌ Erro ao enviar para o Telegram:',
-        expectedMsg: 'Some string error ***SEGREDO_OCULTO***'
+        expectedMsg: 'Some string error ***TOKEN_OCULTO***'
       },
       {
         name: 'msg (Error instance)',
@@ -150,7 +131,7 @@ describe('TelegramService', () => {
         method: () => sendMessageToTelegram('minha msg'),
         mockFn: mockSendMessage,
         prefix: '❌ Erro ao enviar mensagem para o Telegram:',
-        expectedMsg: 'Failed ***SEGREDO_OCULTO***'
+        expectedMsg: 'Failed ***TOKEN_OCULTO***'
       },
       {
         name: 'msg (string)',
@@ -158,7 +139,7 @@ describe('TelegramService', () => {
         method: () => sendMessageToTelegram('minha msg'),
         mockFn: mockSendMessage,
         prefix: '❌ Erro ao enviar mensagem para o Telegram:',
-        expectedMsg: 'Some string error ***SEGREDO_OCULTO***'
+        expectedMsg: 'Some string error ***TOKEN_OCULTO***'
       }
     ])('deve retornar false e mascarar erro em $name', async ({ err, method, mockFn, prefix, expectedMsg }) => {
       mockFn.mockRejectedValueOnce(err);

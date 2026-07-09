@@ -1,13 +1,13 @@
-import fs from 'fs';
-import fsPromises from 'fs/promises';
-import path from 'path';
-import type { Quiz } from './domain/quiz.js';
+import { randomInt } from 'node:crypto';
+import fs from 'node:fs';
+import fsPromises from 'node:fs/promises';
+import path from 'node:path';
+import type { Quiz } from './content.service.js';
 import type { WordTimestamp } from './tts.service.js';
 import { ensureFont, prepareBackground, prepareTextFiles, normalizePath } from './video-assets.service.js';
 import { generateFilters } from './video-filters.service.js';
 import { runFFmpeg } from './video-ffmpeg.service.js';
 import { execAsync } from './utils/exec.js';
-import { randomInt } from 'node:crypto';
 
 const getDuration = async (filePath: string): Promise<number> => {
   const result = await execAsync('ffprobe', [
@@ -16,24 +16,18 @@ const getDuration = async (filePath: string): Promise<number> => {
     '-of', 'default=noprint_wrappers=1:nokey=1',
     filePath
   ]);
-  return parseFloat(result.stdout.trim());
+  return Number.parseFloat(result.stdout.trim());
 };
 
 export const assembleVideo = async (
   quiz: Quiz,
   audioData: { qPath: string; aPath: string; qWords: WordTimestamp[]; aWords: WordTimestamp[] },
-  outputPath: string = 'final_short.mp4',
-  tempDir: string = 'temp_assets'
+  outputPath: string = 'final_short.mp4'
 ): Promise<string> => {
-<<<<<<< Updated upstream
   const tempDir = path.resolve('temp_assets');
   if (!fs.existsSync(tempDir)) {
     await fsPromises.mkdir(tempDir, { recursive: true });
   }
-=======
-  const resolvedTempDir = path.resolve(tempDir);
-  if (!fs.existsSync(resolvedTempDir)) { fs.mkdirSync(resolvedTempDir, { recursive: true }); }
->>>>>>> Stashed changes
 
   console.log(`🎬 Montando vídeo completo...`);
 
@@ -71,12 +65,6 @@ export const assembleVideo = async (
     const hasBeep = fs.existsSync(beepPath);
     const hasLogo = fs.existsSync(logoPath);
 
-<<<<<<< Updated upstream
-=======
-    const bgVideo = prepareBackground(resolvedTempDir);
-    const { qTxtPath, optTxtPaths } = prepareTextFiles(quiz, resolvedTempDir);
-
->>>>>>> Stashed changes
     const { ffmpegInputs, filterComplex } = generateFilters(
       quiz, bgVideo, qPath, aPath, qDur, fontFile, qTxtPath, optTxtPaths,
       hasMusic, hasBeep, hasLogo, musicPath, beepPath, logoPath

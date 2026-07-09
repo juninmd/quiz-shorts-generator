@@ -1,12 +1,8 @@
-import fs from 'fs';
-import fsPromises from 'fs/promises';
-import path from 'path';
-<<<<<<< Updated upstream
+import fs from 'node:fs';
+import fsPromises from 'node:fs/promises';
+import path from 'node:path';
 import type { Quiz } from './content.service.js';
 import { execAsync } from './utils/exec.js';
-=======
-import type { Quiz } from './domain/quiz.js';
->>>>>>> Stashed changes
 
 export const wrapText = (text: string, maxLen: number): string => {
   const words = text.split(' ');
@@ -26,9 +22,9 @@ export const wrapText = (text: string, maxLen: number): string => {
   return lines.join('\n');
 };
 
-export const normalizePath = (p: string) => path.resolve(p).replace(/\\/g, '/');
-export const rel = (p: string) => path.relative(process.cwd(), p).replace(/\\/g, '/');
-export const esc = (p: string) => rel(p).replace(/([:])/g, '\\$1');
+export const normalizePath = (p: string) => path.resolve(p).replaceAll('\\', '/');
+export const rel = (p: string) => path.relative(process.cwd(), p).replaceAll('\\', '/');
+export const esc = (p: string) => rel(p).replaceAll(':', '\\:');
 
 export const ensureFont = async (): Promise<string> => {
   const fontFile = 'assets/fonts/arialbd.ttf';
