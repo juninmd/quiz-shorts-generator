@@ -1,6 +1,5 @@
-<<<<<<< Updated upstream
 # Build stage
-FROM node:26-slim AS builder
+FROM node:24-slim AS builder
 
 WORKDIR /app
 
@@ -17,20 +16,16 @@ RUN apt-get update && apt-get install -y \
 COPY package.json pnpm-lock.yaml ./
 RUN pnpm install --frozen-lockfile
 
-COPY tsconfig.json ./
-COPY src/ src/
-COPY scripts/ scripts/
-COPY assets/ assets/
+COPY . .
 # No build step needed since we use tsx in CMD, but we could compile to JS if we wanted.
 # For simplicity with the existing structure, we'll keep it as TS.
 
 # Final stage
-=======
->>>>>>> Stashed changes
-FROM node:26-slim
+FROM node:24-slim
 
 WORKDIR /app
 
+# Install production dependencies
 RUN apt-get update && apt-get install -y \
     ffmpeg \
     python3 \
@@ -38,24 +33,27 @@ RUN apt-get update && apt-get install -y \
     fonts-liberation \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
-RUN python3 -m pip install --no-cache-dir edge-tts --break-system-packages
-RUN corepack enable && corepack prepare pnpm@10 --activate
+# Install edge-tts via pip (required for src/tts.service.ts)
+RUN python3 -m pip install edge-tts --break-system-packages
+
+# Habilitar pnpm
+RUN corepack enable && corepack prepare pnpm@latest --activate
 
 COPY package.json pnpm-lock.yaml ./
-RUN pnpm install --frozen-lockfile
+RUN pnpm install --prod --frozen-lockfile
 
-COPY tsconfig.json ./
-COPY src ./src
-COPY scripts ./scripts
-COPY assets ./assets
-COPY .env.example ./
+COPY --from=builder /app ./
 
-RUN mkdir -p assets/backgrounds assets/music assets/fonts assets/logo temp_assets/jobs output && \
+# Setup folders and fix permissions
+RUN mkdir -p assets/backgrounds assets/music assets/fonts assets/logo temp_assets output && \
     chown -R node:node /app
+
+# Ensure fonts are available for FFmpeg
 RUN fc-cache -f -v
 
 USER node
 
 ENV NODE_ENV=production
 
-CMD ["pnpm", "run", "start"]
+# The CronJob will override CMD if needed, but we set a default
+CMD ["pnpm", "run", "generate"]

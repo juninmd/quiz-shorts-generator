@@ -83,6 +83,6 @@ export const generateNarration = async (
     return { audioPath, wordTimestamps };
   } catch (error: any) {
     console.error(`❌ Erro ao invocar edge-tts (Python):`, error.message);
-    throw new Error(`Falha na narração via edge-tts: ${error.message}`);
+    throw new Error('Falha na narração via edge-tts.');
   }
 };

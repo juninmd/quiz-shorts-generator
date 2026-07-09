@@ -1,4 +1,3 @@
-<<<<<<< Updated upstream
 import 'dotenv/config';
 import { generateQuiz } from './content.service.js';
 import { generateNarration } from './tts.service.js';
@@ -11,14 +10,8 @@ import path from 'path';
 
 async function main() {
   console.log('🚀 Iniciando geração de Quiz Short (Node.js/TS)...');
-=======
-import { pathToFileURL } from 'url';
-import { runApp } from './app/main.js';
->>>>>>> Stashed changes
 
-export const runCli = async (): Promise<void> => {
   try {
-<<<<<<< Updated upstream
     // 0. Preparar ambiente
     const outputDir = path.resolve('output');
     if (!fs.existsSync(outputDir)) {
@@ -87,21 +80,13 @@ export const runCli = async (): Promise<void> => {
       process.exit(1);
     }
 
-=======
-    const result = await runApp();
-    process.exit(result.status === 'failed' || result.status === 'blocked' ? 1 : 0);
->>>>>>> Stashed changes
   } catch (error) {
-    console.error('💥 CRASH FATAL:', error);
+    console.error('❌ Erro no processo principal:', error);
     process.exit(1);
   }
-};
-
-const isDirectExecution = (): boolean => {
-  const entryPoint = process.argv[1];
-  return entryPoint !== undefined && import.meta.url === pathToFileURL(entryPoint).href;
-};
-
-if (isDirectExecution()) {
-  void runCli();
 }
+
+main().catch(err => {
+  console.error('💥 CRASH FATAL:', err);
+  process.exit(1);
+});

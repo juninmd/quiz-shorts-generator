@@ -2,12 +2,14 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { generateQuiz } from '../content.service.js';
 import { generateObject } from 'ai';
 
+// Mock AI SDK
 vi.mock('ai', () => ({
   generateObject: vi.fn()
 }));
 
-vi.mock('../ai-client.js', () => ({
-  getAIModel: vi.fn(() => 'mock-model')
+// Mock Ollama provider
+vi.mock('ollama-ai-provider', () => ({
+  createOllama: vi.fn(() => vi.fn())
 }));
 
 describe('ContentService', () => {
@@ -32,21 +34,22 @@ describe('ContentService', () => {
     } as any);
   };
 
-<<<<<<< Updated upstream
-=======
   it('deve usar o tópico default "geral" se a lista de tópicos falhar', async () => {
-    vi.spyOn(Math, 'random').mockReturnValueOnce(1);
+    // Math.random sempre retornará 1 para este teste, assim testando o "|| 'geral'" se o array out-of-bounds mockado
+    vi.spyOn(Math, 'random').mockReturnValueOnce(1); // 1 * length = length (out of bounds for array indexing)
+
     mockGenerateObjectResponse(createMockQuiz('geral'));
 
     const quiz = await generateQuiz();
     expect(quiz.tema).toBe('geral');
     expect(generateObject).toHaveBeenCalledWith(
-      expect.objectContaining({ prompt: 'Gere um quiz sobre geral.' })
+      expect.objectContaining({
+        prompt: 'Gere um quiz sobre geral.'
+      })
     );
 
     vi.restoreAllMocks();
   });
->>>>>>> Stashed changes
 
   it('deve gerar um quiz com a estrutura correta usando AI SDK', async () => {
     const mockQuiz = {
@@ -55,9 +58,11 @@ describe('ContentService', () => {
       opcoes: { A: 'Zelda', B: 'Link', C: 'Ganon', D: 'Epona' },
       resposta_correta: 'B'
     };
+
     mockGenerateObjectResponse(mockQuiz);
 
     const quiz = await generateQuiz();
+
     expect(quiz.tema).toBe('jogos');
     expect(quiz.resposta_correta).toBe('B');
     expect(generateObject).toHaveBeenCalled();
@@ -83,7 +88,7 @@ describe('ContentService', () => {
     const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
 
     await expect(generateQuiz()).rejects.toThrow('Falha na geração de conteúdo: AI Error');
-    expect(consoleSpy).toHaveBeenCalledWith('❌ Erro na geração de conteúdo:', 'AI Error');
+    expect(consoleSpy).toHaveBeenCalledWith('❌ Erro na geração de conteúdo via AI SDK:', 'AI Error');
 
     consoleSpy.mockRestore();
   });
@@ -93,7 +98,7 @@ describe('ContentService', () => {
     const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
 
     await expect(generateQuiz()).rejects.toThrow('Falha na geração de conteúdo: undefined');
-    expect(consoleSpy).toHaveBeenCalledWith('❌ Erro na geração de conteúdo:', 'String Error');
+    expect(consoleSpy).toHaveBeenCalledWith('❌ Erro na geração de conteúdo via AI SDK:', 'String Error');
 
     consoleSpy.mockRestore();
   });

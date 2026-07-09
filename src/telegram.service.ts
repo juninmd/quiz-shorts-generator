@@ -1,6 +1,5 @@
 import { Bot, InputFile } from 'grammy';
 import dotenv from 'dotenv';
-import { redactSecrets } from './utils.service.js';
 
 dotenv.config();
 
@@ -27,7 +26,8 @@ const executeTelegramAction = async (
     console.log(successLog);
     success = true;
   } catch (error: any) {
-    console.error(errorLogPrefix, redactSecrets(error.message || String(error)));
+    const errorMessage = (error.message || String(error)).replace(token, '***TOKEN_OCULTO***');
+    console.error(errorLogPrefix, errorMessage);
   } finally {
     try {
       await bot.stop();

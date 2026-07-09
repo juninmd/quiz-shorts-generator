@@ -1,67 +1,119 @@
-# Instalação Local
+# ✅ Setup Completo - Quiz Shorts Generator
 
-## Pré-requisitos
+## 🎉 Status: PRONTO PARA USAR
 
-- Node.js 24+
-- pnpm 10+
-- Python 3.11+
-- FFmpeg e ffprobe disponíveis no PATH
-- Ollama em execução
+Todas as dependências foram instaladas e configuradas com sucesso!
 
-## Instalação
+## 📦 O que foi feito
 
-1. Instale dependências Node.js:
+### 1. **Dependências Python**
+- ✅ Edge-TTS instalado (síntese de voz)
+- ✅ Python 3.11+ disponível
 
+### 2. **Dependências Node.js**
+- ✅ Todas as dependências npm/pnpm instaladas
+- ✅ TypeScript validado
+
+### 3. **Assets**
+- ✅ Usando assets existentes do git:
+  - `assets/backgrounds/` (neon.png, bg_default.png)
+  - `assets/logo/` (logo.png)
+  - `assets/music/` (será preenchido conforme necessário)
+
+### 4. **Scripts**
+- ✅ `pnpm run generate-daily` → Gera 5 shorts com nomes únicos em `output/`
+- ✅ `pnpm run start` → Gera 1 short (uso manual)
+
+### 5. **GitHub Actions**
+- ✅ Workflow `daily_quiz.yml` configurado para:
+  - Rodar a cada 1 hora (ajustável)
+  - Instalar todas as dependências
+  - Gerar 5 shorts
+  - Fazer upload dos shorts como artifacts
+
+### 6. **Gitignore**
+- ✅ Adicionado `output/` para ignorar shorts gerados
+
+## 🚀 Como Usar Localmente
+
+### Pré-requisitos
+1. Certifique-se de que Ollama está rodando:
+   ```bash
+   ollama serve
+   ```
+
+2. (Apenas primeira vez) Baixe o modelo:
+   ```bash
+   ollama pull qwen2.5:1.5b
+   ```
+
+### Gerar 5 Shorts
 ```bash
-pnpm install --frozen-lockfile
+pnpm run generate-daily
 ```
 
-2. Instale `edge-tts` no Python:
+Os vídeos apareçerão em: `output/short_1_*.mp4`, `output/short_2_*.mp4`, etc.
 
-```bash
-python -m pip install edge-tts
+## ⚙️ Variáveis de Ambiente (.env)
+
+```env
+# Ollama
+OLLAMA_HOST=http://localhost:11434
+OLLAMA_MODEL=qwen2.5:1.5b
+
+# Telegram (opcional)
+TELEGRAM_TOKEN=seu_token
+TELEGRAM_CHAT_ID=seu_chat_id
+
+# YouTube (opcional)
+YOUTUBE_CLIENT_ID=seu_client_id
+YOUTUBE_CLIENT_SECRET=seu_client_secret
+YOUTUBE_REFRESH_TOKEN=seu_refresh_token
+YOUTUBE_CHANNEL_NAME=seu_channel_name
 ```
 
-3. Copie `.env.example` para `.env` e ajuste as variáveis necessárias.
+## 📊 Estrutura do Projeto
 
-4. Baixe o modelo do Ollama usado pelo workflow de quiz:
-
-```bash
-ollama pull gemma3:1b
+```
+quiz-shorts-generator/
+├── src/
+│   ├── generate-daily.ts     # 🆕 Script para gerar 5 shorts
+│   ├── index.ts               # Script para gerar 1 short
+│   ├── content.service.ts     # Geração de quiz (Ollama)
+│   ├── tts.service.ts         # Síntese de voz (Edge-TTS)
+│   ├── video.service.ts       # Montagem de vídeo (FFmpeg)
+│   ├── telegram.service.ts    # Envio para Telegram
+│   ├── youtube.service.ts     # Upload para YouTube
+│   └── __tests__/
+├── assets/
+│   ├── backgrounds/           # 🎨 Fundos de vídeo
+│   ├── logo/                  # 🏷️ Logo do projeto
+│   └── music/                 # 🎵 Fundo musical
+├── output/                    # 📹 Shorts gerados (gitignored)
+├── .github/workflows/
+│   └── daily_quiz.yml         # ✅ GitHub Actions configurado
+└── package.json               # ✅ Scripts prontos
 ```
 
-## Execução Local
+## 🔄 GitHub Actions
 
-Rodar o workflow de quiz com a configuração padrão:
-
+### Triggerar manualmente
 ```bash
-pnpm start
+gh workflow run daily_quiz.yml
 ```
 
-Rodar explicitamente um workflow:
+### Ou via interface GitHub
+1. Abra Actions na aba do repositório
+2. Selecione "Daily Quiz Shorts Generator"
+3. Clique "Run workflow"
 
-```bash
-WORKFLOW_ID=quiz pnpm start
-WORKFLOW_ID=podcast-clips pnpm start
-WORKFLOW_ID=release-radar pnpm start
-```
+## 📝 Notas
 
-## Saídas
+- Cada short tem um nome único com tema e timestamp
+- Todos os 5 shorts são salvos na pasta `output/`
+- O workflow roda a cada 1 hora (ajustável em `daily_quiz.yml` na linha com `cron`)
+- Os artifacts ficam disponíveis por 7 dias
 
-- Vídeos renderizados: `output/quiz_*.mp4`
-- Ledger de auditoria: `output/audit-ledger.jsonl`
-- Artefatos temporários por job: `temp_assets/jobs/<jobId>`
+---
 
-## Verificação Local
-
-```bash
-pnpm lint
-pnpm test
-pnpm test:coverage
-```
-
-## Observações
-
-- O workflow `quiz` é o único pronto para publicação automática.
-- `podcast-clips` e `release-radar` ainda exigem fontes autorizadas/oficiais antes de sair do estado `blocked`.
-- Se `ENABLE_YOUTUBE=false`, o vídeo continua sendo gerado e enviado ao Telegram.
+**Setup finalizado em**: 15/03/2026

@@ -42,42 +42,48 @@ describe('TTSService', () => {
     consoleSpy.mockRestore();
   });
 
-  const vttTestCases = [
+  it.each([
     {
-      name: 'arquivo VTT valido com pontos',
-      content: `WEBVTT\n\n00:00:00.100 --> 00:00:00.500\nOlá\n\n00:00:00.600 --> 00:00:01.000\nMundo`
+      name: 'com pontos',
+      content: `WEBVTT
+
+00:00:00.100 --> 00:00:00.500
+Olá
+
+00:00:00.600 --> 00:00:01.000
+Mundo`
     },
     {
-      name: 'arquivo VTT valido com virgulas',
-      content: `WEBVTT\n\n00:00:00,100 --> 00:00:00,500\nOlá\n\n00:00:00,600 --> 00:00:01,000\nMundo`
+      name: 'com virgulas',
+      content: `WEBVTT
+
+00:00:00,100 --> 00:00:00,500
+Olá
+
+00:00:00,600 --> 00:00:01,000
+Mundo`
     }
-  ];
-
-  vttTestCases.forEach((tc) => {
-    it(`deve extrair word timestamps a partir de um ${tc.name}`, async () => {
-      vi.mocked(fs.existsSync).mockReturnValue(true);
-      vi.mocked(execModule.execAsync).mockResolvedValue({ stdout: '', stderr: '', code: 0 });
-
-      vi.mocked(fsPromises.readFile).mockResolvedValue(tc.content);
-
-      const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
-
-      const result = await generateNarration('Olá Mundo', 'file');
-
-      expect(result.audioPath).toBe(path.join('temp_assets', 'file.mp3'));
-      expect(result.wordTimestamps).toHaveLength(2);
-      expect(result.wordTimestamps[0]).toEqual({ start: 0.1, end: 0.5, word: 'Olá' });
-      expect(result.wordTimestamps[1]).toEqual({ start: 0.6, end: 1, word: 'Mundo' });
-
-      consoleSpy.mockRestore();
-    });
-  });
-
-  it('deve ignorar blocos incompletos ou invalidos no VTT', async () => {
+  ])('deve extrair word timestamps a partir de um arquivo VTT valido $name', async ({ content }) => {
     vi.mocked(fs.existsSync).mockReturnValue(true);
     vi.mocked(execModule.execAsync).mockResolvedValue({ stdout: '', stderr: '', code: 0 });
+    vi.mocked(fsPromises.readFile).mockResolvedValue(content);
 
-    const vttContent = `WEBVTT
+    const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+
+    const result = await generateNarration('Olá Mundo', 'file');
+
+    expect(result.audioPath).toBe(path.join('temp_assets', 'file.mp3'));
+    expect(result.wordTimestamps).toHaveLength(2);
+    expect(result.wordTimestamps[0]).toEqual({ start: 0.1, end: 0.5, word: 'Olá' });
+    expect(result.wordTimestamps[1]).toEqual({ start: 0.6, end: 1, word: 'Mundo' });
+
+    consoleSpy.mockRestore();
+  });
+
+  it.each([
+    {
+      name: 'ignorar blocos incompletos ou invalidos',
+      vttContent: `WEBVTT
 
 invalid --> line
 
@@ -89,7 +95,18 @@ invalid --> line
 Palavra
 
 --> 00:00:02.000
-Teste`;
+Teste`,
+      expectedWord: undefined
+    },
+    {
+      name: 'lidar com falha vttTimeToSeconds retornando 0 se invalid format',
+      vttContent: `000000.100 --> 000000.500
+InvalidTimeFormat`,
+      expectedWord: 'InvalidTimeFormat'
+    }
+  ])('deve $name no VTT', async ({ vttContent, expectedWord }) => {
+    vi.mocked(fs.existsSync).mockReturnValue(true);
+    vi.mocked(execModule.execAsync).mockResolvedValue({ stdout: '', stderr: '', code: 0 });
     vi.mocked(fsPromises.readFile).mockResolvedValue(vttContent);
 
     const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
@@ -97,50 +114,32 @@ Teste`;
     const result = await generateNarration('teste', 'file');
 
     expect(result.wordTimestamps).toBeDefined();
+    if (expectedWord) {
+      expect(result.wordTimestamps[0]).toEqual({ start: 0, end: 0, word: expectedWord });
+    }
 
     consoleSpy.mockRestore();
   });
 
-  it('deve lidar com falha vttTimeToSeconds retornando 0 se invalid format (h,m,s undefined)', async () => {
-    vi.mocked(fs.existsSync).mockReturnValue(true);
-    vi.mocked(execModule.execAsync).mockResolvedValue({ stdout: '', stderr: '', code: 0 });
-
-    const vttContent = `000000.100 --> 000000.500
-InvalidTimeFormat`;
-    vi.mocked(fsPromises.readFile).mockResolvedValue(vttContent);
-
-    const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
-
-    const result = await generateNarration('teste', 'file');
-
-    expect(result.wordTimestamps[0]).toEqual({ start: 0, end: 0, word: 'InvalidTimeFormat' });
-
-    consoleSpy.mockRestore();
-  });
-
-  const execErrorCases = [
+  it.each([
     {
       name: 'retornar status diferente de 0',
-      setup: () => vi.mocked(execModule.execAsync).mockResolvedValue({ stdout: '', stderr: 'Python not found', code: 1 })
+      execSetup: () => vi.mocked(execModule.execAsync).mockResolvedValue({ stdout: '', stderr: 'Python not found', code: 1 })
     },
     {
       name: 'falhar com exceção',
-      setup: () => vi.mocked(execModule.execAsync).mockRejectedValue(new Error('Spawn error'))
+      execSetup: () => vi.mocked(execModule.execAsync).mockRejectedValue(new Error('Spawn error'))
     }
-  ];
+  ])('deve lançar erro se execAsync $name', async ({ execSetup }) => {
+    vi.mocked(fs.existsSync).mockReturnValue(true);
+    execSetup();
 
-  execErrorCases.forEach((tc) => {
-    it(`deve lançar erro se execAsync ${tc.name}`, async () => {
-      vi.mocked(fs.existsSync).mockReturnValue(true);
-      tc.setup();
+    const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
 
-      const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
-      const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    await expect(generateNarration('teste', 'file')).rejects.toThrow('Falha na narração via edge-tts.');
 
-      await expect(generateNarration('teste', 'file')).rejects.toThrow('Falha na narração via edge-tts');
-
-      consoleSpy.mockRestore();
-      logSpy.mockRestore();
-    });
+    consoleSpy.mockRestore();
+    logSpy.mockRestore();
   });
 });

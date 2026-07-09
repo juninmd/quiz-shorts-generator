@@ -1,10 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import http from 'http';
 
-vi.mock('dotenv', () => ({
-  default: { config: vi.fn() }
-}));
-
 const mockGenerateAuthUrl = vi.fn().mockReturnValue('mock-auth-url');
 const mockGetToken = vi.fn().mockResolvedValue({ tokens: { refresh_token: 'mock-refresh-token' } });
 
