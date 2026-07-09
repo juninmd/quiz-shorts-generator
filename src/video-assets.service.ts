@@ -1,12 +1,8 @@
 import fs from 'fs';
 import fsPromises from 'fs/promises';
 import path from 'path';
-<<<<<<< Updated upstream
 import type { Quiz } from './content.service.js';
 import { execAsync } from './utils/exec.js';
-=======
-import type { Quiz } from './domain/quiz.js';
->>>>>>> Stashed changes
 
 export const wrapText = (text: string, maxLen: number): string => {
   const words = text.split(' ');

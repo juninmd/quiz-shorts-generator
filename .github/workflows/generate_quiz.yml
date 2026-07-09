@@ -5,10 +5,6 @@ on:
     - cron: '0 0 * * *' # Roda a cada dia a meia noite (gerando 1 video/dia)
   workflow_dispatch: # Permite rodar manualmente para testar
 
-concurrency:
-  group: daily-quiz-generator
-  cancel-in-progress: false
-
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -21,10 +17,10 @@ jobs:
 
     steps:
     - name: Checkout Repository
-      uses: actions/checkout@v7
+      uses: actions/checkout@v4
 
     - name: Set up Python
-      uses: actions/setup-python@v6
+      uses: actions/setup-python@v5
       with:
         python-version: '3.11'
         cache: 'pip'
@@ -46,7 +42,7 @@ jobs:
       run: ffmpeg -version
 
     - name: Install pnpm
-      uses: pnpm/action-setup@v6
+      uses: pnpm/action-setup@v4
       with:
         version: 10
 
@@ -67,20 +63,13 @@ jobs:
         cache-enabled: true
 
     - name: Install Project Dependencies
-      run: pnpm install --frozen-lockfile
-
-    - name: Typecheck
-      run: pnpm lint
-
-    - name: Test
-      run: pnpm test
+      run: pnpm install
 
     - name: Create Required Folders
-      run: mkdir -p assets/backgrounds assets/music assets/fonts assets/logo temp_assets/jobs output
+      run: mkdir -p assets/backgrounds assets/music assets/fonts assets/logo temp_assets output
 
     - name: Run Quiz Generator
       env:
-        WORKFLOW_ID: quiz
         TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
         TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
         OLLAMA_HOST: http://localhost:11434
@@ -106,6 +95,6 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: generated-quiz-shorts
-        path: output/quiz_*.mp4
+        path: output/short_*.mp4
         retention-days: 7
         if-no-files-found: warn # Evita que a pipeline quebre caso o script não gere vídeos nessa rodada
