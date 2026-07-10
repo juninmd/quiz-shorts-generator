@@ -14,19 +14,8 @@ describe('TTSService', () => {
     vi.clearAllMocks();
   });
 
-  it.each([
-    {
-      name: 'deve criar a pasta temp_assets caso nao exista',
-      exists: false,
-      expectedToCreate: true
-    },
-    {
-      name: 'nao deve tentar criar pasta se ja existir',
-      exists: true,
-      expectedToCreate: false
-    }
-  ])('$name', async ({ exists, expectedToCreate }) => {
-    vi.mocked(fs.existsSync).mockReturnValue(exists);
+  it('deve criar a pasta temp_assets caso nao exista', async () => {
+    vi.mocked(fs.existsSync).mockReturnValue(false);
     vi.mocked(execModule.execAsync).mockResolvedValue({ stdout: '', stderr: '', code: 0 });
     vi.mocked(fsPromises.readFile).mockResolvedValue('');
 
@@ -34,11 +23,20 @@ describe('TTSService', () => {
 
     await generateNarration('teste', 'file');
 
-    if (expectedToCreate) {
-      expect(fsPromises.mkdir).toHaveBeenCalledWith('temp_assets', { recursive: true });
-    } else {
-      expect(fsPromises.mkdir).not.toHaveBeenCalled();
-    }
+    expect(fsPromises.mkdir).toHaveBeenCalledWith('temp_assets', { recursive: true });
+    consoleSpy.mockRestore();
+  });
+
+  it('nao deve tentar criar pasta se ja existir', async () => {
+    vi.mocked(fs.existsSync).mockReturnValue(true);
+    vi.mocked(execModule.execAsync).mockResolvedValue({ stdout: '', stderr: '', code: 0 });
+    vi.mocked(fsPromises.readFile).mockResolvedValue('');
+
+    const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+
+    await generateNarration('teste', 'file');
+
+    expect(fsPromises.mkdir).not.toHaveBeenCalled();
     consoleSpy.mockRestore();
   });
 
@@ -96,15 +94,15 @@ Palavra
 
 --> 00:00:02.000
 Teste`,
-      expectedWord: undefined
+      expectedWords: [{ start: 0.6, end: 1, word: 'Palavra' }]
     },
     {
       name: 'lidar com falha vttTimeToSeconds retornando 0 se invalid format',
       vttContent: `000000.100 --> 000000.500
 InvalidTimeFormat`,
-      expectedWord: 'InvalidTimeFormat'
+      expectedWords: [{ start: 0, end: 0, word: 'InvalidTimeFormat' }]
     }
-  ])('deve $name no VTT', async ({ vttContent, expectedWord }) => {
+  ])('deve $name no VTT', async ({ vttContent, expectedWords }) => {
     vi.mocked(fs.existsSync).mockReturnValue(true);
     vi.mocked(execModule.execAsync).mockResolvedValue({ stdout: '', stderr: '', code: 0 });
     vi.mocked(fsPromises.readFile).mockResolvedValue(vttContent);
@@ -114,9 +112,7 @@ InvalidTimeFormat`,
     const result = await generateNarration('teste', 'file');
 
     expect(result.wordTimestamps).toBeDefined();
-    if (expectedWord) {
-      expect(result.wordTimestamps[0]).toEqual({ start: 0, end: 0, word: expectedWord });
-    }
+    expect(result.wordTimestamps).toEqual(expectedWords);
 
     consoleSpy.mockRestore();
   });

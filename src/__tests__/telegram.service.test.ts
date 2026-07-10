@@ -38,16 +38,23 @@ describe('TelegramService', () => {
 
   describe('env variables missing', () => {
     it.each([
-      { deleteToken: true, method: () => sendVideoToTelegram('video.mp4', 'caption') },
-      { deleteToken: false, method: () => sendVideoToTelegram('video.mp4', 'caption') },
-      { deleteToken: true, method: () => sendMessageToTelegram('msg') }
-    ])('deve retornar false se token ou chatId faltarem (deleteToken: $deleteToken)', async ({ deleteToken, method }) => {
-      if (deleteToken) {
-        delete process.env.TELEGRAM_TOKEN;
-      } else {
-        process.env.TELEGRAM_TOKEN = 'token';
-        delete process.env.TELEGRAM_CHAT_ID;
+      {
+        name: 'video (missing token)',
+        method: () => sendVideoToTelegram('video.mp4', 'caption'),
+        setupEnv: () => { delete process.env.TELEGRAM_TOKEN; }
+      },
+      {
+        name: 'video (missing chatId)',
+        method: () => sendVideoToTelegram('video.mp4', 'caption'),
+        setupEnv: () => { process.env.TELEGRAM_TOKEN = 'token'; delete process.env.TELEGRAM_CHAT_ID; }
+      },
+      {
+        name: 'msg (missing token)',
+        method: () => sendMessageToTelegram('msg'),
+        setupEnv: () => { delete process.env.TELEGRAM_TOKEN; }
       }
+    ])('deve retornar false se token ou chatId faltarem em $name', async ({ method, setupEnv }) => {
+      setupEnv();
       const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
       const result = await method();
       expect(result).toBe(false);
@@ -154,49 +161,72 @@ describe('TelegramService', () => {
   });
 
   describe('bot.stop() error handling', () => {
-    const edgeCases = [
+    const truthyErrors = [
       { type: 'string', err: 'String error stop' },
-      { type: 'null', err: null },
-      { type: 'undefined', err: undefined },
-      { type: 'false', err: false },
       { type: 'Error instance', err: new Error('Stop error') }
     ];
 
-    edgeCases.forEach(({ type, err }) => {
-      it(`deve tratar exceção no bot.stop (${type})`, async () => {
-        process.env.TELEGRAM_TOKEN = 'token123';
-        process.env.TELEGRAM_CHAT_ID = 'chat123';
+    const falsyErrors = [
+      { type: 'null', err: null },
+      { type: 'undefined', err: undefined },
+      { type: 'false', err: false }
+    ];
 
-        // Testa as duas funções seguidas
-        mockSendVideo.mockResolvedValueOnce(true);
-        mockStop.mockImplementationOnce(() => { throw err; });
+    describe('when stop throws truthy errors', () => {
+      truthyErrors.forEach(({ type, err }) => {
+        it(`deve logar erro quando bot.stop falha com ${type}`, async () => {
+          process.env.TELEGRAM_TOKEN = 'token123';
+          process.env.TELEGRAM_CHAT_ID = 'chat123';
 
-        const consoleLogSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
-        const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+          mockSendVideo.mockResolvedValueOnce(true);
+          mockStop.mockImplementationOnce(() => { throw err; });
 
-        const resVideo = await sendVideoToTelegram('video.mp4', 'caption');
-        expect(resVideo).toBe(true);
+          const consoleLogSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+          const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
 
-        mockSendMessage.mockResolvedValueOnce(true);
-        mockStop.mockImplementationOnce(() => { throw err; });
-        const resMsg = await sendMessageToTelegram('msg');
-        expect(resMsg).toBe(true);
+          const resVideo = await sendVideoToTelegram('video.mp4', 'caption');
+          expect(resVideo).toBe(true);
 
-        expect(mockStop).toHaveBeenCalledTimes(2);
+          mockSendMessage.mockResolvedValueOnce(true);
+          mockStop.mockImplementationOnce(() => { throw err; });
+          const resMsg = await sendMessageToTelegram('msg');
+          expect(resMsg).toBe(true);
 
-        let hasErrorInCatch = false;
-        try {
-          if (err) { hasErrorInCatch = true; }
-        } catch (e) {
-          hasErrorInCatch = true;
-        }
+          expect(mockStop).toHaveBeenCalledTimes(2);
+          expect(consoleErrorSpy).toHaveBeenCalledWith('Erro ao parar o bot:', err);
 
-        if (hasErrorInCatch) {
-            expect(consoleErrorSpy).toHaveBeenCalledWith('Erro ao parar o bot:', err);
-        }
+          consoleLogSpy.mockRestore();
+          consoleErrorSpy.mockRestore();
+        });
+      });
+    });
 
-        consoleLogSpy.mockRestore();
-        consoleErrorSpy.mockRestore();
+    describe('when stop throws falsy errors', () => {
+      falsyErrors.forEach(({ type, err }) => {
+        it(`não deve logar erro quando bot.stop falha com ${type}`, async () => {
+          process.env.TELEGRAM_TOKEN = 'token123';
+          process.env.TELEGRAM_CHAT_ID = 'chat123';
+
+          mockSendVideo.mockResolvedValueOnce(true);
+          mockStop.mockImplementationOnce(() => { throw err; });
+
+          const consoleLogSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+          const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+          const resVideo = await sendVideoToTelegram('video.mp4', 'caption');
+          expect(resVideo).toBe(true);
+
+          mockSendMessage.mockResolvedValueOnce(true);
+          mockStop.mockImplementationOnce(() => { throw err; });
+          const resMsg = await sendMessageToTelegram('msg');
+          expect(resMsg).toBe(true);
+
+          expect(mockStop).toHaveBeenCalledTimes(2);
+          expect(consoleErrorSpy).not.toHaveBeenCalledWith('Erro ao parar o bot:', expect.anything());
+
+          consoleLogSpy.mockRestore();
+          consoleErrorSpy.mockRestore();
+        });
       });
     });
   });

@@ -66,40 +66,37 @@ describe('VideoAssetsService', () => {
       expect(fsPromises.mkdir).not.toHaveBeenCalled();
     });
 
-    it.each([
-      {
-        name: 'copiar fonte no windows (win32)',
-        mockSetup: () => vi.mocked(fsPromises.copyFile).mockResolvedValue(undefined),
-        expectedError: false
-      },
-      {
-        name: 'logar erro e continuar se a copia falhar (try catch no windows)',
-        mockSetup: () => vi.mocked(fsPromises.copyFile).mockRejectedValue(new Error('Permission denied')),
-        expectedError: true
-      }
-    ])('deve $name', async ({ mockSetup, expectedError }) => {
+    it('deve copiar fonte no windows (win32)', async () => {
       vi.mocked(fs.existsSync).mockImplementation((p: any) => {
-        if (p === 'assets/fonts/arialbd.ttf') return false;
-        if (p === 'C:/Windows/Fonts/arialbd.ttf') return true;
+        if (p === 'assets/fonts/arialbd.ttf') { return false; }
+        if (p === 'C:/Windows/Fonts/arialbd.ttf') { return true; }
         return false;
       });
-      mockSetup();
+      vi.mocked(fsPromises.copyFile).mockResolvedValue(undefined);
       Object.defineProperty(process, 'platform', { value: 'win32' });
 
-      if (expectedError) {
-        const consoleWarn = vi.spyOn(console, 'warn').mockImplementation(() => {});
-        await ensureFont();
-        expect(consoleWarn).toHaveBeenCalledWith(
-          '⚠️ Falha ao copiar a fonte de C:/Windows/Fonts/arialbd.ttf:',
-          expect.any(Error)
-        );
-        expect(consoleWarn).toHaveBeenCalledWith('⚠️ Não foi possível copiar automaticamente a fonte Arial.');
-        consoleWarn.mockRestore();
-      } else {
-        await ensureFont();
-        expect(fsPromises.mkdir).toHaveBeenCalledWith('assets/fonts', { recursive: true });
-        expect(fsPromises.copyFile).toHaveBeenCalledWith('C:/Windows/Fonts/arialbd.ttf', 'assets/fonts/arialbd.ttf');
-      }
+      await ensureFont();
+      expect(fsPromises.mkdir).toHaveBeenCalledWith('assets/fonts', { recursive: true });
+      expect(fsPromises.copyFile).toHaveBeenCalledWith('C:/Windows/Fonts/arialbd.ttf', 'assets/fonts/arialbd.ttf');
+    });
+
+    it('deve logar erro e continuar se a copia falhar (try catch no windows)', async () => {
+      vi.mocked(fs.existsSync).mockImplementation((p: any) => {
+        if (p === 'assets/fonts/arialbd.ttf') { return false; }
+        if (p === 'C:/Windows/Fonts/arialbd.ttf') { return true; }
+        return false;
+      });
+      vi.mocked(fsPromises.copyFile).mockRejectedValue(new Error('Permission denied'));
+      Object.defineProperty(process, 'platform', { value: 'win32' });
+
+      const consoleWarn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+      await ensureFont();
+      expect(consoleWarn).toHaveBeenCalledWith(
+        '⚠️ Falha ao copiar a fonte de C:/Windows/Fonts/arialbd.ttf:',
+        expect.any(Error)
+      );
+      expect(consoleWarn).toHaveBeenCalledWith('⚠️ Não foi possível copiar automaticamente a fonte Arial.');
+      consoleWarn.mockRestore();
     });
 
     it.each([
