@@ -75,50 +75,51 @@ describe('VideoService', () => {
     logSpy.mockRestore();
   });
 
-  it.each([
-    {
-      name: 'montar video sem musica se pasta nao existir ou vazia',
-      hasMusic: false,
-      throws: false,
-      expectedResult: 'out.mp4'
-    },
-    {
-      name: 'logar e relançar erro se montagem falhar',
-      hasMusic: true,
-      throws: true,
-      expectedResult: 'ffprobe crash'
-    }
-  ])('deve $name', async ({ hasMusic, throws, expectedResult }) => {
+  it('deve montar video sem musica se pasta nao existir ou vazia', async () => {
     vi.mocked(fs.existsSync).mockImplementation((p: any) => {
       const sp = String(p);
       if (sp.includes('music')) {
-        return hasMusic;
+        return false;
       }
       return true;
     });
 
     vi.mocked(fsPromises.readdir).mockResolvedValue([]);
 
-    if (throws) {
-      vi.mocked(execModule.execAsync).mockRejectedValue(new Error(expectedResult));
-    } else {
-      vi.mocked(execModule.execAsync).mockResolvedValue({
-        stdout: '2.0\n',
-        stderr: '',
-        code: 0
-      });
-    }
+    vi.mocked(execModule.execAsync).mockResolvedValue({
+      stdout: '2.0\n',
+      stderr: '',
+      code: 0
+    });
 
     const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
     const errSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
 
-    if (throws) {
-      await expect(assembleVideo(quizBase, audioData)).rejects.toThrow(expectedResult);
-      expect(errSpy).toHaveBeenCalledWith('❌ Erro na montagem do vídeo:', expectedResult);
-    } else {
-      const out = await assembleVideo(quizBase, audioData, 'out.mp4');
-      expect(out).toBe(expectedResult);
-    }
+    const out = await assembleVideo(quizBase, audioData, 'out.mp4');
+    expect(out).toBe('out.mp4');
+
+    logSpy.mockRestore();
+    errSpy.mockRestore();
+  });
+
+  it('deve logar e relançar erro se montagem falhar', async () => {
+    vi.mocked(fs.existsSync).mockImplementation((p: any) => {
+      const sp = String(p);
+      if (sp.includes('music')) {
+        return true;
+      }
+      return true;
+    });
+
+    vi.mocked(fsPromises.readdir).mockResolvedValue([]);
+
+    vi.mocked(execModule.execAsync).mockRejectedValue(new Error('ffprobe crash'));
+
+    const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    const errSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+    await expect(assembleVideo(quizBase, audioData)).rejects.toThrow('ffprobe crash');
+    expect(errSpy).toHaveBeenCalledWith('❌ Erro na montagem do vídeo:', 'ffprobe crash');
 
     logSpy.mockRestore();
     errSpy.mockRestore();

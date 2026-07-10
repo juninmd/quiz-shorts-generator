@@ -95,40 +95,50 @@ describe('get-youtube-token script', () => {
     expect(mockServerListen).toHaveBeenCalledWith(3000, expect.any(Function));
 
     const listenCall = mockServerListen.mock.calls[0];
-    if (listenCall && listenCall[1]) {
-      listenCall[1]();
-    }
+    expect(listenCall).toBeDefined();
+    expect(listenCall[1]).toBeInstanceOf(Function);
+    listenCall[1]();
   });
 
   describe('HTTP Callback Handler', () => {
-    it.each([
-      ['success with code', '/callback?code=mock-code', false, 200, 'mock-refresh-token', true],
-      ['missing code', '/callback', false, 400, 'Código não encontrado na URL.', false],
-      ['error during token fetch', '/callback?code=mock-code', true, 500, 'Ocorreu um erro.', false],
-    ])('handles %s', async (name, url, shouldThrow, expectedStatus, expectedContent, success) => {
+    it('handles success with code', async () => {
       await setupAndImport();
 
-      if (shouldThrow) {
-        mockGetToken.mockRejectedValueOnce(new Error('test error'));
-      }
-
-      const req = { url };
+      const req = { url: '/callback?code=mock-code' };
       const res = createMockRes();
 
       await storedHandler(req as any, res as any);
 
-      if (success) {
-        expect(res.writeHead).toHaveBeenCalledWith(200, { 'Content-Type': 'text/html; charset=utf-8' });
-        expect(consoleLogSpy).toHaveBeenCalledWith(expect.stringContaining(expectedContent as string));
-        expect(mockServerClose).toHaveBeenCalled();
-        expect(processExitSpy).toHaveBeenCalledWith(0);
-      } else {
-        expect(res.writeHead).toHaveBeenCalledWith(expectedStatus, expect.any(Object));
-        expect(res.end).toHaveBeenCalledWith(expectedContent);
-        if (shouldThrow) {
-          expect(consoleErrorSpy).toHaveBeenCalledWith('❌ Erro inesperado:', expect.any(Error));
-        }
-      }
+      expect(res.writeHead).toHaveBeenCalledWith(200, { 'Content-Type': 'text/html; charset=utf-8' });
+      expect(consoleLogSpy).toHaveBeenCalledWith(expect.stringContaining('mock-refresh-token'));
+      expect(mockServerClose).toHaveBeenCalled();
+      expect(processExitSpy).toHaveBeenCalledWith(0);
+    });
+
+    it('handles missing code', async () => {
+      await setupAndImport();
+
+      const req = { url: '/callback' };
+      const res = createMockRes();
+
+      await storedHandler(req as any, res as any);
+
+      expect(res.writeHead).toHaveBeenCalledWith(400, expect.any(Object));
+      expect(res.end).toHaveBeenCalledWith('Código não encontrado na URL.');
+    });
+
+    it('handles error during token fetch', async () => {
+      await setupAndImport();
+      mockGetToken.mockRejectedValueOnce(new Error('test error'));
+
+      const req = { url: '/callback?code=mock-code' };
+      const res = createMockRes();
+
+      await storedHandler(req as any, res as any);
+
+      expect(res.writeHead).toHaveBeenCalledWith(500, expect.any(Object));
+      expect(res.end).toHaveBeenCalledWith('Ocorreu um erro.');
+      expect(consoleErrorSpy).toHaveBeenCalledWith('❌ Erro inesperado:', expect.any(Error));
     });
   });
 });
