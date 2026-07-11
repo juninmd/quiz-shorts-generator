@@ -66,14 +66,18 @@ describe('VideoAssetsService', () => {
       expect(fsPromises.mkdir).not.toHaveBeenCalled();
     });
 
-    it('deve copiar fonte no windows (win32)', async () => {
+    const setupWindowsMock = () => {
       vi.mocked(fs.existsSync).mockImplementation((p: any) => {
         if (p === 'assets/fonts/arialbd.ttf') { return false; }
         if (p === 'C:/Windows/Fonts/arialbd.ttf') { return true; }
         return false;
       });
-      vi.mocked(fsPromises.copyFile).mockResolvedValue(undefined);
       Object.defineProperty(process, 'platform', { value: 'win32' });
+    };
+
+    it('deve copiar fonte no windows (win32)', async () => {
+      setupWindowsMock();
+      vi.mocked(fsPromises.copyFile).mockResolvedValue(undefined);
 
       await ensureFont();
       expect(fsPromises.mkdir).toHaveBeenCalledWith('assets/fonts', { recursive: true });
@@ -81,13 +85,8 @@ describe('VideoAssetsService', () => {
     });
 
     it('deve logar erro e continuar se a copia falhar (try catch no windows)', async () => {
-      vi.mocked(fs.existsSync).mockImplementation((p: any) => {
-        if (p === 'assets/fonts/arialbd.ttf') { return false; }
-        if (p === 'C:/Windows/Fonts/arialbd.ttf') { return true; }
-        return false;
-      });
+      setupWindowsMock();
       vi.mocked(fsPromises.copyFile).mockRejectedValue(new Error('Permission denied'));
-      Object.defineProperty(process, 'platform', { value: 'win32' });
 
       const consoleWarn = vi.spyOn(console, 'warn').mockImplementation(() => {});
       await ensureFont();
