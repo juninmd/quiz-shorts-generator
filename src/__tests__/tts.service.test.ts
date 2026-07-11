@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { generateNarration } from '../tts.service.js';
 import * as fs from 'node:fs';
 import * as fsPromises from 'node:fs/promises';
@@ -14,30 +14,30 @@ describe('TTSService', () => {
     vi.clearAllMocks();
   });
 
-  it('deve criar a pasta temp_assets caso nao exista', async () => {
-    vi.mocked(fs.existsSync).mockReturnValue(false);
-    vi.mocked(execModule.execAsync).mockResolvedValue({ stdout: '', stderr: '', code: 0 });
-    vi.mocked(fsPromises.readFile).mockResolvedValue('');
+  describe('diretório temp_assets', () => {
+    let consoleSpy: any;
 
-    const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    beforeEach(() => {
+      vi.mocked(execModule.execAsync).mockResolvedValue({ stdout: '', stderr: '', code: 0 });
+      vi.mocked(fsPromises.readFile).mockResolvedValue('');
+      consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    });
 
-    await generateNarration('teste', 'file');
+    afterEach(() => {
+      consoleSpy.mockRestore();
+    });
 
-    expect(fsPromises.mkdir).toHaveBeenCalledWith('temp_assets', { recursive: true });
-    consoleSpy.mockRestore();
-  });
+    it('deve criar a pasta temp_assets caso nao exista', async () => {
+      vi.mocked(fs.existsSync).mockReturnValue(false);
+      await generateNarration('teste', 'file');
+      expect(fsPromises.mkdir).toHaveBeenCalledWith('temp_assets', { recursive: true });
+    });
 
-  it('nao deve tentar criar pasta se ja existir', async () => {
-    vi.mocked(fs.existsSync).mockReturnValue(true);
-    vi.mocked(execModule.execAsync).mockResolvedValue({ stdout: '', stderr: '', code: 0 });
-    vi.mocked(fsPromises.readFile).mockResolvedValue('');
-
-    const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
-
-    await generateNarration('teste', 'file');
-
-    expect(fsPromises.mkdir).not.toHaveBeenCalled();
-    consoleSpy.mockRestore();
+    it('nao deve tentar criar pasta se ja existir', async () => {
+      vi.mocked(fs.existsSync).mockReturnValue(true);
+      await generateNarration('teste', 'file');
+      expect(fsPromises.mkdir).not.toHaveBeenCalled();
+    });
   });
 
   it.each([
