@@ -96,8 +96,8 @@ describe('get-youtube-token script', () => {
 
     const listenCall = mockServerListen.mock.calls[0];
     expect(listenCall).toBeDefined();
-    expect(listenCall[1]).toBeInstanceOf(Function);
-    listenCall[1]();
+    expect(listenCall![1]).toBeInstanceOf(Function);
+    (listenCall![1] as Function)();
   });
 
   describe('HTTP Callback Handler', () => {
