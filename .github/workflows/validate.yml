@@ -1,0 +1,22 @@
+name: Validate PR
+
+on:
+  pull_request:
+    branches:
+      - main
+
+env:
+  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+jobs:
+  validate:
+    uses: juninmd/base-actions/.github/workflows/reusable-validate.yml@defc12e68638adfe91d1604a94f91706acd3cd52
+    secrets:
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    with:
+      node-version: 24
+      install-command: 'pnpm install'
+      build-command: 'pnpm lint'
+      test-command: 'pnpm test:coverage'
+      start-command: ''
+      node-options: ''
